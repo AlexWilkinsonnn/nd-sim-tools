@@ -1,0 +1,17 @@
+/generator/kinematics/set rooTracker
+/generator/kinematics/rooTracker/input input_file.gtrac.root
+/generator/position/set free
+/generator/time/set fixed
+/generator/count/fixed/number 1
+/generator/count/set fixed
+/generator/add
+/edep/hitLength ArgonCube 0.04 cm
+/edep/hitLength LArActiveModWalls 0.04 cm
+/edep/hitLength PixelPlaneL 0.04 cm
+/edep/hitLength PixelPlaneR 0.04 cm
+/edep/hitLength LightDsPlane 0.04 cm
+/edep/hitLength LightUsPlane 0.04 cm
+/edep/hitLength Cathode 0.04 cm
+/edep/hitLength ResistiveWireSide 0.04 cm
+/edep/hitLength ResistiveFieldSide 0.04 cm
+/edep/update

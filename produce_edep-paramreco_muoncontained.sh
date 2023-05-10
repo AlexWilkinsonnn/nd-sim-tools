@@ -5,10 +5,22 @@
 # Only want events with lepton ending inside the LAr
 ################################################################################
 
+################################################################################
+# Options
+
 GENIE_OUTPATH="/pnfs/dune/persistent/users/awilkins/lep_contained_pairs/genie"
 EDEP_OUTPATH="/pnfs/dune/persistent/users/awilkins/lep_contained_pairs/edep"
+CAF_OUTPATH="/pnfs/dune/persistent/users/awilkins/lep_contained_pairs/caf"
 
-NDCAFMAKER_DIR="ND_CAFMaker_job_uptoedep_nogapdset"
+SAVE_GENIE=true
+SAVE_EDEP=true # edep-sim output
+SAVE_EDEP_FLAT=true # dumped to flat tree for easier reading into and FD data product
+SAVE_EDEP_H5=true # dumped to hdf5 for larnd-sim
+SAVE_EDEP_MAKECAF=false # summarised edep-sim for parameterised reco in mackeCAF
+SAVE_CAF=true # currently parameterised reco caf
+
+INPUTS_DIR="sim_inputs"
+ND_CAFMAKER_DIR="ND_CAFMaker"
 
 GEOMETRY="MPD_SPY_LArFullSensDet.gdml"
 TOPVOL="volArgonCubeActive"
@@ -24,7 +36,9 @@ OFFAXIS=0
 OADIR="0m"
 
 FIRST=$1
-NPOT=$2
+NPOT=$2 # 1e14 ~ 20-30 events
+
+################################################################################
 
 RUNNO=$((${PROCESS}+${FIRST}))
 RNDSEED=$(expr 1000000*${OFFAXIS}+${RUNNO}+1000000 | bc)
@@ -38,6 +52,10 @@ NEVENTS="-e ${NPOT}"
 export IFDH_CP_UNLINK_ON_ERROR=1
 export IFDH_CP_MAXRETRIES=1
 export IFDH_DEBUG=0
+
+# Dump the current clean environment to to env.sh so it can be restored when needed
+echo "Saving environment env.sh"
+declare -px > env.sh
 
 # Setting up for genie stuff
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
@@ -54,12 +72,12 @@ export Geant4_DIR=`dirname $G4_cmake_file`
 # edep-sim needs to have the GEANT bin directory in the path
 export PATH=$PATH:$GEANT4_FQ_DIR/bin
 
-cp ${NDCAFMAKER_DIR}/sim_inputs/* .
-cp ${NDCAFMAKER_DIR}/*.py .
+cp ${INPUTS_DIR}/* .
 
 # Get flux files to local node
 # dk2nu files: /pnfs/dune/persistent/users/ljf26/fluxfiles/g4lbne/v3r5p4/QGSP_BERT/OptimizedEngineeredNov2017/neutrino/flux/dk2nu
 # gsimple files: /pnfs/dune/persistent/users/dbrailsf/flux/nd/gsimple/v2_8_6d/OptimizedEngineeredNov2017/neutrino/
+# NOTE ifdh ls breaks all the time
 ls
 echo "Cheking ifdh ls is working"
 echo "ifdh ls $FLUXDIR:"
@@ -67,7 +85,7 @@ ifdh ls $FLUXDIR
 echo
 
 chmod +x copy_dune_ndtf_flux
-./copy_dune_ndtf_flux --top ${FLUXDIR} --outpath local_flux_files --flavor ${MODE} --base OptimizedEngineeredNov2017 --maxmb=300 ${FLUXOPT}
+./copy_dune_ndtf_flux --top ${FLUXDIR} --output local_flux_files --flavor ${MODE} --base OptimizedEngineeredNov2017 --maxmb=300 ${FLUXOPT}
 
 echo "local_flux_files:"
 ls local_flux_files
@@ -120,20 +138,73 @@ NPER=$(echo "std::cout << gtree->GetEntries() << std::endl;" | genie -l -b input
 ifdh cp ${MODE}.${RNDSEED}.ghep.root ${GENIE_OUTPATH}/${HORN}.${RNDSEED}.ghep.root
 
 setup edepsim v3_2_0 -q e20:prof
-python -m venv .venv_dumpTree
-source .venv_dumpTree/bin/activate
-pip install fire h5py numpy tqdm  
 
+echo "Running edepsim"
 edep-sim -C \
          -g $GEOMETRY \
          -o edep.${RNDSEED}.root \
          -e ${NPER} \
          $EDEP_MAC
 
-python dumpTree_larnd-simv0.3.3master_activevol.py --input_file edep.${RNDSEED}.root \
-                                                   --output_file edep_dump.${RNDSEED}.h5
+# Want to rollback environment to use old ND_CAFMaker scripts
+# Unset all new env vars and then source the old env - probably overkill but it works
+echo "Resetting env with env.sh"
+unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
+source env.sh
 
-ifdh cp ${MODE}.${RNDSEED}.ghep.root ${GENIE_OUTPATH}/${HORN}.${RNDSEED}.ghep.root
-ifdh cp edep.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep.root
-ifdh cp edep_dump.${RNDSEED}.h5 ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_dump.h5
+source ${ND_CAFMAKER_DIR}/ndcaf_setup.sh
+export GXMLPATH=${PWD}:${GXMLPATH}
+export GNUMIXML="GNuMIFlux.xml"
+
+echo "Running makeCAF dumpTree"
+python dumpTree_nogeoeff.py --infile edep.${RNDSEED}.root \
+                            --outfile edep_dump.${RNDSEED}.root \
+                            --muoncontained_ids_file muoncontained_eventids.${RNDSEED}.txt
+
+echo "Running makeCAF"
+cd $ND_CAFMAKER_DIR
+./makeCAF --infile ../edep_dump.${RNDSEED}.root \
+          --gfile ../${MODE}.${RNDSEED}.ghep.root \
+          --outfile ../${HORN}.${RNDSEED}.CAF.root \
+          --fhicl ../fhicl.fcl \
+          --seed ${RNDSEED} \
+          ${RHC} \
+          --oa ${OFFAXIS}
+cd ..
+
+echo "Resetting env with env.sh"
+cat env.sh
+unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
+source env.sh
+
+source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
+setup edepsim v3_2_0 -q e20:prof
+setup ifdhc v2_6_6
+
+python -m venv .venv_dumpTree
+source .venv_dumpTree/bin/activate
+pip install fire h5py numpy
+
+echo "Running larndsim dumpTree"
+python dumpTree_larndsimv0_3_4.py --input_file edep.${RNDSEED}.root \
+                                  --output_file edep.${RNDSEED}.h5
+
+echo "Running FD dumpTree"
+python dump_edep_to_flattree.py edep.${RNDSEED}.root edep_flat.${RNDSEED}.root
+
+if [ "$SAVE_GENIE" = true ] ; then
+  ifdh cp ${MODE}.${RNDSEED}.ghep.root ${GENIE_OUTPATH}/${HORN}.${RNDSEED}.ghep.root
+fi
+if [ "$SAVE_EDEP" = true ] ; then
+  ifdh cp edep.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep.root
+fi
+if [ "$SAVE_EDEP_FLAT" = true ] ; then
+  ifdh cp edep_flat.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_flat.root
+fi
+if [ "$SAVE_EDEP_H5" = true ] ; then
+  ifdh cp edep.${RNDSEED}.h5 ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep.h5
+fi
+if [ "$SAVE_MAKECAF" = true ] ; then
+  ifdh cp ${HORN}.${RNDSEED}.CAF.root ${CAF_OUTPATH}/${HORN}.${RNDSEED}.CAF.root
+fi
 
