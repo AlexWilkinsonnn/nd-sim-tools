@@ -42,7 +42,6 @@ def main(args):
         with open(args.muoncontained_ids_file, "r") as f:
             valid_evids = { int(line.rstrip()) for line in f }
 
-    print(valid_evids)
     for i_event in range(entries):
         depos.clear()
         eventID[0] = -999

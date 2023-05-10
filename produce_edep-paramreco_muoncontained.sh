@@ -8,9 +8,9 @@
 ################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/persistent/users/awilkins/lep_contained_pairs/genie"
-EDEP_OUTPATH="/pnfs/dune/persistent/users/awilkins/lep_contained_pairs/edep"
-CAF_OUTPATH="/pnfs/dune/persistent/users/awilkins/lep_contained_pairs/caf"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/caf"
 
 SAVE_GENIE=true
 SAVE_EDEP=true # edep-sim output
@@ -46,7 +46,11 @@ RNDSEED=`echo "$RNDSEED" | cut -f 1 -d '.'`
 
 NEVENTS="-e ${NPOT}"
 
-# echo "Running on $(hostname) at ${GLIDEIN_Site}. GLIDEIN_DUNESite = ${GLIDEIN_DUNESite}"
+echo "Running on $(hostname) at ${GLIDEIN_Site}. GLIDEIN_DUNESite = ${GLIDEIN_DUNESite}"
+ls
+
+mv ${INPUT_TAR_DIR_LOCAL}/${INPUTS_DIR} .
+mv ${INPUT_TAR_DIR_LOCAL}/${ND_CAFMAKER_DIR} .
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
@@ -78,11 +82,9 @@ cp ${INPUTS_DIR}/* .
 # dk2nu files: /pnfs/dune/persistent/users/ljf26/fluxfiles/g4lbne/v3r5p4/QGSP_BERT/OptimizedEngineeredNov2017/neutrino/flux/dk2nu
 # gsimple files: /pnfs/dune/persistent/users/dbrailsf/flux/nd/gsimple/v2_8_6d/OptimizedEngineeredNov2017/neutrino/
 # NOTE ifdh ls breaks all the time
-ls
 echo "Cheking ifdh ls is working"
 echo "ifdh ls $FLUXDIR:"
 ifdh ls $FLUXDIR
-echo
 
 chmod +x copy_dune_ndtf_flux
 ./copy_dune_ndtf_flux --top ${FLUXDIR} --output local_flux_files --flavor ${MODE} --base OptimizedEngineeredNov2017 --maxmb=300 ${FLUXOPT}
@@ -135,8 +137,6 @@ gntpc -i input_file.ghep.root -f rootracker \
 # get the number of events from the GENIE files to pass it to edep-sim
 NPER=$(echo "std::cout << gtree->GetEntries() << std::endl;" | genie -l -b input_file.ghep.root 2>/dev/null  | tail -1)
 
-ifdh cp ${MODE}.${RNDSEED}.ghep.root ${GENIE_OUTPATH}/${HORN}.${RNDSEED}.ghep.root
-
 setup edepsim v3_2_0 -q e20:prof
 
 echo "Running edepsim"
@@ -187,10 +187,13 @@ pip install fire h5py numpy
 
 echo "Running larndsim dumpTree"
 python dumpTree_larndsimv0_3_4.py --input_file edep.${RNDSEED}.root \
-                                  --output_file edep.${RNDSEED}.h5
+                                  --output_file edep.${RNDSEED}.h5 \
+                                  --muoncontained_ids_file muoncontained_eventids.${RNDSEED}.txt
 
 echo "Running FD dumpTree"
-python dump_edep_to_flattree.py edep.${RNDSEED}.root edep_flat.${RNDSEED}.root
+python dump_edep_to_flattree.py edep.${RNDSEED}.root \
+                                edep_flat.${RNDSEED}.root \
+                                --muoncontained_ids_file muoncontained_eventids.${RNDSEED}.txt
 
 if [ "$SAVE_GENIE" = true ] ; then
   ifdh cp ${MODE}.${RNDSEED}.ghep.root ${GENIE_OUTPATH}/${HORN}.${RNDSEED}.ghep.root
