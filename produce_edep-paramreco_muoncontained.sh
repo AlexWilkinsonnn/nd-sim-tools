@@ -207,7 +207,10 @@ fi
 if [ "$SAVE_EDEP_H5" = true ] ; then
   ifdh cp edep.${RNDSEED}.h5 ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep.h5
 fi
-if [ "$SAVE_MAKECAF" = true ] ; then
+if [ "$SAVE_EDEP_MAKECAF" = true ] ; then
+  ifdh cp edep_dump.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_dump.root
+fi
+if [ "$SAVE_CAF" = true ] ; then
   ifdh cp ${HORN}.${RNDSEED}.CAF.root ${CAF_OUTPATH}/${HORN}.${RNDSEED}.CAF.root
 fi
 
