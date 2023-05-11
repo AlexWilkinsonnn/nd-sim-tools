@@ -80,28 +80,11 @@ export PATH=$PATH:$GEANT4_FQ_DIR/bin
 
 cp ${INPUTS_DIR}/* .
 
-# Get flux files to local node
-# dk2nu files: /pnfs/dune/persistent/users/ljf26/fluxfiles/g4lbne/v3r5p4/QGSP_BERT/OptimizedEngineeredNov2017/neutrino/flux/dk2nu
-# gsimple files: /pnfs/dune/persistent/users/dbrailsf/flux/nd/gsimple/v2_8_6d/OptimizedEngineeredNov2017/neutrino/
-# NOTE ifdh ls breaks all the time
-echo "Cheking ifdh ls is working"
-echo "ifdh ls $FLUXDIR:"
-ifdh ls $FLUXDIR
-
 chmod +x copy_dune_flux
 ./copy_dune_flux --top ${FLUXDIR} --output flux_files --flavor ${MODE} --maxmb=300 ${FLUXOPT}
 
 echo "flux_files:"
 ls flux_files
-
-# if [ "${FLUX}" = "dk2nu" ]; then
-# cd flux_files
-# for f in *.dk2nu.root
-# do
-#     mv "$f" "dk2nu_$f"
-# done
-# cd ..
-# fi
 
 # Modify GNuMIFlux.xml to the specified off-axis position
 sed -i "s/<beampos> ( 0.0, 0.05387, 6.66 )/<beampos> ( ${OFFAXIS}, 0.05387, 6.66 )/g" GNuMIFlux.xml
