@@ -4,13 +4,14 @@
 # larnd-sim
 # Only want events with lepton ending inside the LAr
 ################################################################################
-
-################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/genie"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/edep"
-CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/caf"
+# GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/genie"
+# EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/edep"
+# CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/caf"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
+CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
 
 SAVE_GENIE=true
 SAVE_EDEP=true # edep-sim output
@@ -31,7 +32,8 @@ HORN="FHC"
 RHC=""
 FLUX="dk2nu"
 FLUXOPT="--dk2nu"
-FLUXDIR="/pnfs/dune/persistent/users/ljf26/fluxfiles/g4lbne/v3r5p4/QGSP_BERT"
+# FLUXDIR="/pnfs/dune/persistent/users/ljf26/fluxfiles/g4lbne/v3r5p4/QGSP_BERT"
+FLUXDIR="/cvmfs/dune.osgstorage.org/pnfs/fnal.gov/usr/dune/persistent/stash/Flux/g4lbne/v3r5p4/QGSP_BERT/OptimizedEngineeredNov2017"
 OFFAXIS=0
 OADIR="0m"
 
@@ -86,20 +88,20 @@ echo "Cheking ifdh ls is working"
 echo "ifdh ls $FLUXDIR:"
 ifdh ls $FLUXDIR
 
-chmod +x copy_dune_ndtf_flux
-./copy_dune_ndtf_flux --top ${FLUXDIR} --output local_flux_files --flavor ${MODE} --base OptimizedEngineeredNov2017 --maxmb=300 ${FLUXOPT}
+chmod +x copy_dune_flux
+./copy_dune_flux --top ${FLUXDIR} --output flux_files --flavor ${MODE} --maxmb=300 ${FLUXOPT}
 
-echo "local_flux_files:"
-ls local_flux_files
+echo "flux_files:"
+ls flux_files
 
-if [ "${FLUX}" = "dk2nu" ]; then
-cd local_flux_files
-for f in *.dk2nu.root
-do
-    mv "$f" "dk2nu_$f"
-done
-cd ..
-fi
+# if [ "${FLUX}" = "dk2nu" ]; then
+# cd flux_files
+# for f in *.dk2nu.root
+# do
+#     mv "$f" "dk2nu_$f"
+# done
+# cd ..
+# fi
 
 # Modify GNuMIFlux.xml to the specified off-axis position
 sed -i "s/<beampos> ( 0.0, 0.05387, 6.66 )/<beampos> ( ${OFFAXIS}, 0.05387, 6.66 )/g" GNuMIFlux.xml
@@ -111,7 +113,7 @@ export GNUMIXML="GNuMIFlux.xml"
 echo "Running gevgen"
 TIME_GENIE=`date +%s`
 gevgen_fnal \
-    -f local_flux_files/${FLUX}*,DUNEND \
+    -f flux_files/${FLUX}*,DUNEND \
     -g ${GEOMETRY} \
     -t ${TOPVOL} \
     -L cm -D g_cm3 \
