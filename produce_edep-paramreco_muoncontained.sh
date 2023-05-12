@@ -6,12 +6,12 @@
 ################################################################################
 # Options
 
-# GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/genie"
-# EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/edep"
-# CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/caf"
-GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
-CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/caf"
+# GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
+# EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
+# CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/test"
 
 SAVE_GENIE=true
 SAVE_EDEP=true # edep-sim output
@@ -32,7 +32,6 @@ HORN="FHC"
 RHC=""
 FLUX="dk2nu"
 FLUXOPT="--dk2nu"
-# FLUXDIR="/pnfs/dune/persistent/users/ljf26/fluxfiles/g4lbne/v3r5p4/QGSP_BERT"
 FLUXDIR="/cvmfs/dune.osgstorage.org/pnfs/fnal.gov/usr/dune/persistent/stash/Flux/g4lbne/v3r5p4/QGSP_BERT/OptimizedEngineeredNov2017"
 OFFAXIS=0
 OADIR="0m"
@@ -51,8 +50,8 @@ NEVENTS="-e ${NPOT}"
 echo "Running on $(hostname) at ${GLIDEIN_Site}. GLIDEIN_DUNESite = ${GLIDEIN_DUNESite}"
 ls
 
-mv ${INPUT_TAR_DIR_LOCAL}/${INPUTS_DIR} .
-mv ${INPUT_TAR_DIR_LOCAL}/${ND_CAFMAKER_DIR} .
+cp -r ${INPUT_TAR_DIR_LOCAL}/${INPUTS_DIR} .
+cp -r ${INPUT_TAR_DIR_LOCAL}/${ND_CAFMAKER_DIR} .
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
@@ -120,7 +119,9 @@ gntpc -i input_file.ghep.root -f rootracker \
 
 # edep-sim wants number of events, but we are doing POT so the files will be slightly different
 # get the number of events from the GENIE files to pass it to edep-sim
-NPER=$(echo "std::cout << gtree->GetEntries() << std::endl;" | genie -l -b input_file.ghep.root 2>/dev/null  | tail -1)
+NPER=$(echo "std::cout << gtree->GetEntries() << std::endl;" | \
+       genie -l -b input_file.ghep.root 2>/dev/null | \
+       tail -1)
 
 setup edepsim v3_2_0 -q e20:prof
 
@@ -134,7 +135,9 @@ edep-sim -C \
 # Want to rollback environment to use old ND_CAFMaker scripts
 # Unset all new env vars and then source the old env - probably overkill but it works
 echo "Resetting env with env.sh"
-unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
+unset $(comm -2 -3 <(\
+        printenv | sed 's/=.*//' | sort) <(\
+        sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
 source env.sh
 
 source ${ND_CAFMAKER_DIR}/ndcaf_setup.sh
@@ -159,7 +162,9 @@ cd ..
 
 echo "Resetting env with env.sh"
 cat env.sh
-unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
+unset $(comm -2 -3 <(\
+        printenv | sed 's/=.*//' | sort) <(\
+        sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
 source env.sh
 
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
