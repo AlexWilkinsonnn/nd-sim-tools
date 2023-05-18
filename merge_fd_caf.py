@@ -216,9 +216,11 @@ def main(args):
     nc_recomethod = array("i", [0])
     t_out.Branch("nc_recomethod", nc_recomethod, "fd_nc_recomethod/I")
 
+    event_cnt = 0
+
     for i_file, fd_filepath in enumerate(fd_files):
         if i_file + 1 % 100 == 0:
-            print(i_file)
+            print("{} files processed -- {} events merged".format(i_file, event_cnt))
 
         # XXX test
         if i_file > 20:
@@ -228,7 +230,7 @@ def main(args):
         t_fd = f_fd.Get("recodump/FDReco")
 
         num = re.findall("FHC\.[0-9]*\.", os.path.basename(fd_filepath))[0][4:-1]
-    
+
         # Annoying genie warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -238,7 +240,7 @@ def main(args):
                         os.path.join(args.nd_dir, "FHC.{}.CAF.root".format(num))
                     ),
                     shell=True
-                ).decode().strip("\n")  
+                ).decode().strip("\n")
             )
         # Some caf files did not get the caf tree, grid job failure I missed I suppose
         if not f_nd.GetListOfKeys().Contains("caf"):
@@ -254,7 +256,7 @@ def main(args):
             for e_nd in t_nd:
                 if int(e_nd.event) != event_num[0]:
                     continue
-                    
+
                 run_num[0] = int(e_nd.run)
 
                 is_cc[0] = int(e_nd.isCC)
@@ -350,12 +352,16 @@ def main(args):
                 nc_lep_E[0] = float(e_fd.NCLepE)
                 nc_recomethod[0] = int(e_fd.NCRecoMethod)
 
+                event_cnt += 1
+
                 break
 
             t_out.Fill()
 
         # f_fd.Close()
         # f_fd.Close()
+
+    print("Finished: {} files processed -- {} events merged".format(i_file + 1, event_cnt))
 
     f_out.Write()
     # f_out.Close()
