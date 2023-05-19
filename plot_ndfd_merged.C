@@ -9,7 +9,7 @@ void plot_ndfd_merged()
 {
   gStyle->SetOptStat(0);
 
-  const std::string fname = "/dune/app/users/awilkins/nd-sim-tools/merge_nd-fd_test_more.root";
+  const std::string fname = "/dune/app/users/awilkins/nd-sim-tools/merge_nd-fd_test_moremore.root";
 
   TFile* f = TFile::Open(fname.c_str());
   TTree* t = (TTree*)f->Get("nd_fd_reco");
@@ -47,13 +47,18 @@ void plot_ndfd_merged()
   // hFDNumuNuE->Draw("hist same");
   // leg->Draw();
 
-  TH1F* hEvDiff = new TH1F("hEvDiff", "ND - FD Ev Reco (muon contained)", 50, -3, 3);
+  TH1F* hEvDiff = new TH1F("hEvDiff", "ND - FD Ev Reco", 100, -3, 3);
   t->Draw("Ev_reco - fd_numu_nu_E>>+hEvDiff", "", "goff");
   c = new TCanvas();
   hEvDiff->Draw("hist");
 
-  TH1F* hNumuCVNNDReco = new TH1F("hNumuCVNNDReco", "CVN Scores", 50, 0, 1);
-  TH1F* hNumuCVNNDNoReco = new TH1F("hNumuCVNNDNoReco", "CVN Scores", 50, 0, 1);
+  TH1F* hEvDiffFrac = new TH1F("hEvDiffFrac", "(ND - FD)/ND Ev Reco ", 100, -1.5, 1.5);
+  t->Draw("(Ev_reco - fd_numu_nu_E)/Ev_reco>>+hEvDiffFrac", "Ev_reco", "goff");
+  c = new TCanvas();
+  hEvDiffFrac->Draw("hist");
+
+  TH1F* hNumuCVNNDReco = new TH1F("hNumuCVNNDReco", "CVN Nnumu Score", 50, 0, 1);
+  TH1F* hNumuCVNNDNoReco = new TH1F("hNumuCVNNDNoReco", "CVN Numu Score", 50, 0, 1);
   t->Draw("fd_numu_score>>+hNumuCVNNDReco", "reco_numu==1", "goff");
   t->Draw("fd_numu_score>>+hNumuCVNNDNoReco", "reco_numu==0", "goff");
   c = new TCanvas();
