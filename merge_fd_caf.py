@@ -222,12 +222,8 @@ def main(args):
     event_cnt, missing_caf_tree_cnt, muon_contained_cnt = 0, 0, 0
 
     for i_file, fd_filepath in enumerate(fd_files):
-        if i_file + 1 % 100 == 0:
+        if (i_file + 1) % 100 == 0:
             print("{} files processed -- {} events merged".format(i_file, event_cnt))
-
-        # XXX test
-        if i_file > 20:
-            break
 
         f_fd = ROOT.TFile.Open(fd_filepath)
         t_fd = f_fd.Get("recodump/FDReco")
