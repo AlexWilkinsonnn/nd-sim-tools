@@ -4,6 +4,7 @@ same events.
 Expects a directory of ND CAFs names FHC.{number}.caf.root and a directory of fd reco dumps with
 names FHC.{number}.LoadedDepos.detsim_reco_recodump.root. Within each file events have an eventID
 data product, the ND CAFs can have events without a pair.
+NOTE There is a runtime error about using the ROOT.std.string but it still seems to work...
 """
 
 import argparse, os, subprocess, re, warnings
@@ -141,6 +142,8 @@ def main(args):
     t_out.Branch("muon_endpntZ", muon_endpnt_z, "muon_endpntZ/F")
     hadE_veto = array("f", [0])
     t_out.Branch("Ehad_veto", hadE_veto, "Ehad_veto/F")
+    muon_endvol = ROOT.std.string()
+    t_out.Branch("muon_endVolName", muon_endvol)
 
     # FD Reco
     numu_score = array("f", [0])
@@ -216,7 +219,7 @@ def main(args):
     nc_recomethod = array("i", [0])
     t_out.Branch("nc_recomethod", nc_recomethod, "fd_nc_recomethod/I")
 
-    event_cnt = 0
+    event_cnt, missing_caf_tree_cnt, muon_contained_cnt = 0, 0, 0
 
     for i_file, fd_filepath in enumerate(fd_files):
         if i_file + 1 % 100 == 0:
@@ -244,15 +247,12 @@ def main(args):
             )
         # Some caf files did not get the caf tree, grid job failure I missed I suppose
         if not f_nd.GetListOfKeys().Contains("caf"):
-            print("FHC.{}.CAF.root missing caf tree".format(num))
-            # f_nd.Close()
-            # f_fd.Close()
+            missing_caf_tree_cnt += 1
             continue
         t_nd = f_nd.Get("caf")
 
         for e_fd in t_fd:
             event_num[0] = int(e_fd.eventid)
-            print(event_num[0])
             for e_nd in t_nd:
                 if int(e_nd.event) != event_num[0]:
                     continue
@@ -315,6 +315,7 @@ def main(args):
                 muon_endpnt_y[0] = float(e_nd.muon_endpoint[1])
                 muon_endpnt_z[0] = float(e_nd.muon_endpoint[2])
                 hadE_veto[0] = float(e_nd.Ehad_veto)
+                muon_endvol.replace(0, ROOT.std.string.npos, str(e_nd.muon_endVolName))
 
                 numu_score[0] = float(e_fd.numuScore)
                 nue_score[0] = float(e_fd.nueScore)
@@ -353,18 +354,23 @@ def main(args):
                 nc_recomethod[0] = int(e_fd.NCRecoMethod)
 
                 event_cnt += 1
+                if muon_contained[0] == 1:
+                    muon_contained_cnt += 1
 
                 break
 
             t_out.Fill()
 
-        # f_fd.Close()
-        # f_fd.Close()
-
-    print("Finished: {} files processed -- {} events merged".format(i_file + 1, event_cnt))
+    print(
+        (
+            "Finished: {} files processed -- {} events merged -- "
+            "{} ND CAFs with missing caf tree -- {} events with muon_contained==1"
+        ).format(
+            i_file + 1, event_cnt, missing_caf_tree_cnt, muon_contained_cnt
+        )
+    )
 
     f_out.Write()
-    # f_out.Close()
 
 
 def parse_arguments():
