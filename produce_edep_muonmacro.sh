@@ -22,8 +22,9 @@ NEVENTS=$2
 
 ################################################################################
 
+PROCESS=0
 RUNNO=$((${PROCESS}+${FIRST}))
-RNDSEED=$(expr 1000000*${OFFAXIS}+${RUNNO}+1000000 | bc)
+RNDSEED=$(expr ${RUNNO} | bc)
 RNDSEED=`echo "$RNDSEED" | cut -f 1 -d '.'`
 
 # echo "Running on $(hostname) at ${GLIDEIN_Site}. GLIDEIN_DUNESite = ${GLIDEIN_DUNESite}"

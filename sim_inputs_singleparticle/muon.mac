@@ -13,7 +13,11 @@
 # specify the position of the vertex.  The any of the GPS direction
 # and energy commands can be used.
 /gps/particle mu+
-/gps/energy 2000 MeV
+/gps/ene/type Lin
+/gps/ene/min 100 MeV
+/gps/ene/max 1000 MeV
+/gps/ene/gradient 0
+/gps/ene/intercept 100
 
 # This generates the position of the particle gun.  It can be
 # used for the other particle guns to create a multi particle event.  The
