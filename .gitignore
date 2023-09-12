@@ -1,3 +1,5 @@
 *.tar.gz
 *.root
 file_nums**.txt
+
+/test_area*
