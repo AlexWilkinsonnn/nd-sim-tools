@@ -200,11 +200,13 @@ def dump(input_file, output_file, nd_ecc=False):
         # Dump the primary vertices
         if nd_ecc:
             vertex = np.empty(len(event.throwVtx_nd_ecc_cm), dtype=vertices_dtype)
+            vertex["eventID"] = i_event
             vertex["x_vert"] = event.throwVtx_nd_ecc_cm[0]
             vertex["y_vert"] = event.throwVtx_nd_ecc_cm[1]
             vertex["z_vert"] = event.throwVtx_nd_ecc_cm[2]
         else:
             vertex = np.empty(len(event.throwVtx_nd_cm), dtype=vertices_dtype)
+            vertex["eventID"] = i_event
             vertex["x_vert"] = event.throwVtx_nd_cm[0]
             vertex["y_vert"] = event.throwVtx_nd_cm[1]
             vertex["z_vert"] = event.throwVtx_nd_cm[2]
@@ -274,6 +276,7 @@ def dump(input_file, output_file, nd_ecc=False):
 
         # Dump the FD deps. These do not need to be in the segment format required to larnd-sim
         vertex_fd = np.empty(len(event.throwVtx_fd_cm), dtype=vertices_dtype)
+        vertex_fd["eventID"] = i_event
         vertex_fd["x_vert"] = event.throwVtx_fd_cm[0]
         vertex_fd["y_vert"] = event.throwVtx_fd_cm[1]
         vertex_fd["z_vert"] = event.throwVtx_fd_cm[2]
