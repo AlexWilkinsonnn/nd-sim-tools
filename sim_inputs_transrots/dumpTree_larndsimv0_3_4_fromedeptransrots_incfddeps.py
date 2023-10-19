@@ -140,7 +140,7 @@ def printSegmentContainer(depth, containerName, hitSegments):
 # Prep HDF5 file for writing
 def initHDF5File(output_file):
     with h5py.File(output_file, 'w') as f:
-        f.create_dataset('trajectories', (0,), dtype=trajectories_dtype, maxshape=(None,))
+        # f.create_dataset('trajectories', (0,), dtype=trajectories_dtype, maxshape=(None,))
         f.create_dataset('segments', (0,), dtype=segments_dtype, maxshape=(None,))
         f.create_dataset('vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
         f.create_dataset('fd_deps', (0,), dtype=depos_dtype, maxshape=(None,))
