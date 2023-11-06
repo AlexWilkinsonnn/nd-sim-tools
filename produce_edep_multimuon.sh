@@ -6,7 +6,7 @@
 ################################################################################
 # Options
 
-EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/lep_contained_pairs/edep"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/contrastive_learning/multi_muon_edep"
 
 SAVE_EDEP=true # edep-sim output
 SAVE_EDEP_H5=true # dumped to hdf5 for larnd-sim
@@ -15,7 +15,7 @@ INPUTS_DIR="sim_inputs_singleparticle"
 
 GEOMETRY="MPD_SPY_LAr.gdml"
 TOPVOL="volArgonCubeActive"
-EDEP_MAC="muon.mac"
+EDEP_MAC="multi_muon.mac"
 
 FIRST=$1
 NEVENTS=$2
@@ -60,7 +60,7 @@ setup edepsim v3_2_0 -q e20:prof
 echo "Running edepsim"
 edep-sim -C \
          -g $GEOMETRY \
-         -o edep.muon.${RNDSEED}.root \
+         -o edep.muons.${RNDSEED}.root \
          -e ${NEVENTS} \
          $EDEP_MAC
 
@@ -80,13 +80,13 @@ source .venv_dumpTree/bin/activate
 pip install fire h5py numpy
 
 echo "Running larndsim dumpTree"
-python dumpTree_larndsimv0_3_4_multiprimaryvtx.py --input_file edep.muon.${RNDSEED}.root \
-                                                  --output_file edep.muon.${RNDSEED}.h5
+python dumpTree_larndsimv0_3_4_multiprimaryvtx.py --input_file edep.muons.${RNDSEED}.root \
+                                                  --output_file edep.muons.${RNDSEED}.h5
 
-# if [ "$SAVE_EDEP" = true ] ; then
-#   ifdh cp edep.muon.${RNDSEED}.root ${EDEP_OUTPATH}/edep.muon.${RNDSEED}.root
-# fi
-# if [ "$SAVE_EDEP_H5" = true ] ; then
-#   ifdh cp edep.${RNDSEED}.h5 ${EDEP_OUTPATH}/edep.${RNDSEED}.h5
-# fi
+if [ "$SAVE_EDEP" = true ] ; then
+  ifdh cp edep.muons.${RNDSEED}.root ${EDEP_OUTPATH}/edep.muons.${RNDSEED}.root
+fi
+if [ "$SAVE_EDEP_H5" = true ] ; then
+  ifdh cp edep.muons.${RNDSEED}.h5 ${EDEP_OUTPATH}/edep.muons.${RNDSEED}.h5
+fi
 
