@@ -210,13 +210,13 @@ def dump(input_file, output_file, muoncontained_ids_file=""):
 
         # Dump the primary vertices
         vertex = np.empty(len(event.Primaries), dtype=vertices_dtype)
-        for primaryVertex in event.Primaries:
+        for iPrimary, primaryVertex in enumerate(event.Primaries):
             #printPrimaryVertex("PP", primaryVertex)
-            vertex["eventID"] = event.EventId
-            vertex["x_vert"] = primaryVertex.GetPosition().X()
-            vertex["y_vert"] = primaryVertex.GetPosition().Y()
-            vertex["z_vert"] = primaryVertex.GetPosition().Z()
-            vertices_list.append(vertex)
+            vertex[iPrimary]["eventID"] = event.EventId
+            vertex[iPrimary]["x_vert"] = primaryVertex.GetPosition().X()
+            vertex[iPrimary]["y_vert"] = primaryVertex.GetPosition().Y()
+            vertex[iPrimary]["z_vert"] = primaryVertex.GetPosition().Z()
+        vertices_list.append(vertex)
 
         # Dump the trajectories
         #print("Number of trajectories ", len(event.Trajectories))

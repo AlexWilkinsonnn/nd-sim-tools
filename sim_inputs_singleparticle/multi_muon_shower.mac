@@ -1,0 +1,76 @@
+####################################################################
+#
+# Generate multiple muons from same vertex
+#
+
+# Clear the source and tell GPS to make multiple vertices
+/gps/source/clear
+/gps/source/multiplevertex true
+
+# Create the first particle
+/gps/source/add 1
+/gps/particle mu-
+/gps/ene/type Lin
+/gps/ene/min 200 MeV
+/gps/ene/max 3000 MeV
+/gps/ene/gradient 0
+/gps/ene/intercept 200
+/gps/position 0.0 0.0 5.00 m
+/gps/pos/type Volume
+/gps/pos/shape Para
+/gps/pos/halfx 200 cm
+/gps/pos/halfy 100 cm
+/gps/pos/halfz 50 cm
+/gps/ang/type iso
+/gps/ang/maxtheta 90 deg
+/gps/ang/rot1 1 0 0
+/gps/ang/rot2 0 -1 0
+
+# Create the second particle.
+/gps/source/add 2
+/gps/particle e-
+/gps/ene/type Lin
+/gps/ene/min 200 MeV
+/gps/ene/max 2000 MeV
+/gps/ene/gradient 0
+/gps/ene/intercept 200
+/gps/position 0.0 0.0 6.00 m
+/gps/pos/type Volume
+/gps/pos/shape Para
+/gps/pos/halfx 200 cm
+/gps/pos/halfy 100 cm
+/gps/pos/halfz 50 cm
+/gps/ang/type iso
+/gps/ang/maxtheta 90 deg
+/gps/ang/rot1 1 0 0
+/gps/ang/rot2 0 -1 0
+
+# Create the third particle.
+/gps/source/add 3
+/gps/particle pi-
+/gps/ene/type Lin
+/gps/ene/min 200 MeV
+/gps/ene/max 2000 MeV
+/gps/ene/gradient 0
+/gps/ene/intercept 200
+/gps/position 0.0 0.0 6.00 m
+/gps/pos/type Volume
+/gps/pos/shape Para
+/gps/pos/halfx 200 cm
+/gps/pos/halfy 100 cm
+/gps/pos/halfz 50 cm
+/gps/ang/type iso
+/gps/ang/maxtheta 90 deg
+/gps/ang/rot1 1 0 0
+/gps/ang/rot2 0 -1 0
+
+# Add the GPS generator.  It will create two primary vertices (G4PrimaryVertex objects).
+/generator/add
+
+# Copy the vertex position from the first G4PrimaryVertex object to the second. The vertices are
+# numbered from one, but that the G4PrimaryVertex objects are numbered from zero.
+/generator/combine 0 1
+/generator/combine 0 2
+
+/edep/update
+
