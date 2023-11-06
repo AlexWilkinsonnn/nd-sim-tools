@@ -184,7 +184,8 @@ def dump(input_file, output_file, muoncontained_ids_file=""):
             valid_evids = { int(line.rstrip()) for line in f }
 
     for jentry in range(entries):
-        #print(jentry)
+        if jentry % 1000:
+            print(jentry)
         nb = inputTree.GetEntry(jentry)
 
         if muoncontained_ids_file and int(event.EventId) not in valid_evids:
