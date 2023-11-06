@@ -6,7 +6,7 @@
 ################################################################################
 # Options
 
-EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/contrastive_learning/muon_showers_edep"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/gps_edep"
 
 SAVE_EDEP=true # edep-sim output
 SAVE_EDEP_H5=true # dumped to hdf5 for larnd-sim

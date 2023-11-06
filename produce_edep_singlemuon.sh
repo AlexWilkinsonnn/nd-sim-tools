@@ -6,7 +6,7 @@
 ################################################################################
 # Options
 
-EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/contrastive_learning/single_muon_edep"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/gps_edep"
 
 SAVE_EDEP=true # edep-sim output
 SAVE_EDEP_H5=true # dumped to hdf5 for larnd-sim
@@ -15,7 +15,7 @@ INPUTS_DIR="sim_inputs_singleparticle"
 
 GEOMETRY="MPD_SPY_LAr.gdml"
 TOPVOL="volArgonCubeActive"
-EDEP_MAC="sinle_muon.mac"
+EDEP_MAC="single_muon.mac"
 
 FIRST=$1
 NEVENTS=$2
