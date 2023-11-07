@@ -10,6 +10,7 @@ EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/gps_edep"
 
 SAVE_EDEP=true # edep-sim output
 SAVE_EDEP_H5=true # dumped to hdf5 for larnd-sim
+REMOVE_AFTER=true # delete files after ifdh cp
 
 INPUTS_DIR="sim_inputs_singleparticle"
 
@@ -84,9 +85,13 @@ python dumpTree_larndsimv0_3_4_multiprimaryvtx.py --input_file edep.muon.${RNDSE
                                                   --output_file edep.muon.${RNDSEED}.h5
 
 if [ "$SAVE_EDEP" = true ] ; then
-  ifdh cp edep.muon.${RNDSEED}.root ${EDEP_OUTPATH}/edep.muon.${RNDSEED}.root
+  ifdh cp edep.muon.${RNDSEED}.root ${EDEP_OUTPATH}/edep.muon.${RNDSEED}.root && \
+    $REMOVE_AFTER && \
+    rm edep.muon.${RNDSEED}.root
 fi
 if [ "$SAVE_EDEP_H5" = true ] ; then
-  ifdh cp edep.muon.${RNDSEED}.h5 ${EDEP_OUTPATH}/edep.muon.${RNDSEED}.h5
+  ifdh cp edep.muon.${RNDSEED}.h5 ${EDEP_OUTPATH}/edep.muon.${RNDSEED}.h5 && \
+    $REMOVE_AFTER && \
+    rm edep.muon.${RNDSEED}.h5
 fi
 
