@@ -59,7 +59,10 @@ cp ${INPUTS_DIR}/* .
 setup edepsim v3_2_0 -q e20:prof
 
 echo "Running edepsim"
+# -s uses current time for random seed
+# don't know how to use $RNDSEED and by default it seems to be using the same seed everytime
 edep-sim -C \
+         -s \
          -g $GEOMETRY \
          -o edep.muon_showers.${RNDSEED}.root \
          -e ${NEVENTS} \

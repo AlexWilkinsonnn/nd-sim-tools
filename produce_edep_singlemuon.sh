@@ -8,9 +8,9 @@
 
 EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/gps_edep"
 
-SAVE_EDEP=true # edep-sim output
-SAVE_EDEP_H5=true # dumped to hdf5 for larnd-sim
-REMOVE_AFTER=true # delete files after ifdh cp
+SAVE_EDEP=true  # edep-sim output
+SAVE_EDEP_H5=true  # dumped to hdf5 for larnd-sim
+REMOVE_AFTER=true  # delete files after ifdh cp
 
 INPUTS_DIR="sim_inputs_singleparticle"
 
@@ -59,7 +59,10 @@ cp ${INPUTS_DIR}/* .
 setup edepsim v3_2_0 -q e20:prof
 
 echo "Running edepsim"
+# -s uses current time for random seed
+# don't know how to use $RNDSEED and by default it seems to be using the same seed everytime
 edep-sim -C \
+         -s \
          -g $GEOMETRY \
          -o edep.muon.${RNDSEED}.root \
          -e ${NEVENTS} \
