@@ -53,7 +53,7 @@ else
   echo "Running on $(hostname) at ${GLIDEIN_Site}. GLIDEIN_DUNESite = ${GLIDEIN_DUNESite}"
   cp -r ${INPUT_TAR_DIR_LOCAL}/${INPUTS_DIR} .
   cp -r ${INPUT_TAR_DIR_LOCAL}/${ND_CAFMAKER_DIR} .
-  cp -r ${INPUT_TAR_DIR_LOCAL}/${TRANS_ROTS_DIR} .
+  cp -r ${INPUT_TAR_DIR_LOCAL}/${TRANSROTS_DIR} .
 fi
 
 RUNNO=$((${PROCESS}+${FIRST}))
