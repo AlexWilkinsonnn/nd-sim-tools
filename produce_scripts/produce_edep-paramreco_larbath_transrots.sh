@@ -205,7 +205,8 @@ setup edepsim v3_2_0 -q e20:prof
 python -m venv .venv_3.9.2_ndfd_pairs
 source .venv_3.9.2_ndfd_pairs/bin/activate
 pip install torch scipy h5py fire
-export PYTHONPATH=${PYTHONPATH}:${PWD}/${TRANSROTS_DIR}/lib/
+export PYTHONPATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
+export LD_LIBRARY_PATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
 
 echo "Running translation + rotation throws to get selected nd-fd pairs"
 mkdir n2fd_outputs
@@ -216,6 +217,8 @@ python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
 cd ../../
 
 echo "Running nd-fd pair maker"
+ls -lrth
+ls -lrth n2fd_outputs/*
 python dumpTree_larndsimv0_3_4_transrots-paramreco.py --param_reco_file ${HORN}.${RNDSEED}.nd.CAF.root \
                                                       n2fd_outputs/root_out/n2fd_paired_out.root \
                                                       ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
