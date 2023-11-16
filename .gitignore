@@ -4,3 +4,10 @@ file_nums**.txt
 .venv*
 
 /test_area*
+
+/inputs/DUNE_ND_GeoEff/.git*
+/inputs/DUNE_ND_GeoEff/pybind11
+/inputs/DUNE_ND_GeoEff/bin
+/inputs/DUNE_ND_GeoEff/lib
+/inputs/DUNE_ND_GeoEff/tests
+/inputs/DUNE_ND_GeoEff/tools
