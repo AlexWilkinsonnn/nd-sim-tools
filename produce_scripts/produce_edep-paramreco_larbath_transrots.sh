@@ -17,7 +17,7 @@ SAVE_EDEP=false # edep-sim output
 SAVE_EDEP_MAKECAF=false # summarised edep-sim for parameterised reco in mackeCAF
 SAVE_CAF=false # currently parameterised reco caf
 SAVE_NDFD_ROOT=false # nd and fd depo data after translation + rotation throws to select
-SAVE_PAIR_H5=true # nd-fd paired data file
+SAVE_PAIR_H5=false # nd-fd paired data file
 
 INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
 ND_CAFMAKER_DIR="ND_CAFMaker"
@@ -40,7 +40,7 @@ FLUXDIR="/cvmfs/dune.osgstorage.org/pnfs/fnal.gov/usr/dune/persistent/stash/Flux
 OFFAXIS=0
 OADIR="0m"
 
-INTERACTIVE=false # not running on grid
+INTERACTIVE=true # not running on grid
 
 FIRST=$1
 NPOT=$2 # 1e14 ~ 20-30 events
@@ -205,8 +205,13 @@ setup edepsim v3_2_0 -q e20:prof
 python -m venv .venv_3.9.2_ndfd_pairs
 source .venv_3.9.2_ndfd_pairs/bin/activate
 pip install torch scipy h5py fire
-export PYTHONPATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
-export LD_LIBRARY_PATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
+if [ "$INTERACTIVE" = true ]; then
+  export PYTHONPATH=${PWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
+  export LD_LIBRARY_PATH=${PWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
+else
+  export PYTHONPATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
+  export LD_LIBRARY_PATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
+fi
 
 echo "Running translation + rotation throws to get selected nd-fd pairs"
 mkdir n2fd_outputs
