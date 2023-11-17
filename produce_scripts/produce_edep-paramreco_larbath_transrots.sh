@@ -19,6 +19,7 @@ SAVE_CAF=false # currently parameterised reco caf
 SAVE_NDFD_ROOT=false # nd and fd depo data after translation + rotation throws to select
 SAVE_PAIR_H5=true # nd-fd paired data file
 
+# These dirs need to be in the job tarball
 INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
 ND_CAFMAKER_DIR="ND_CAFMaker"
 TRANSROTS_DIR="DUNE_ND_GeoEff"
