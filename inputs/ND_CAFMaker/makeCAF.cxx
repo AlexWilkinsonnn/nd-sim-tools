@@ -593,6 +593,9 @@ int main( int argc, char const *argv[] )
   caf.cafFile->cd();
   tGeoEfficiencyThrowsOut->CloneTree()->Write();
 
+  std::cout << "Writing CAF" << std::endl;
+  caf.write();
+
   // Store edep-sim event IDS also because I am scared
   TTree *tEventId = new TTree("eventid", "eventid");
   int evidOut;
@@ -606,8 +609,4 @@ int main( int argc, char const *argv[] )
     tEventId->Fill();
   }
   tEventId->Write();
-
-  std::cout << "Writing CAF" << std::endl;
-  caf.write();
-
 }
