@@ -22,8 +22,7 @@ segments_dtype = np.dtype([("eventID", "u4"), ("z_end", "f4"),
                            ("pixel_plane", "i4"), ("t_end", "f4"),
                            ("dEdx", "f4"), ("dE", "f4"), ("t", "f4"),
                            ("y", "f4"), ("x", "f4"), ("z", "f4"),
-                           ("n_photons","f4"),
-                           ("start_ndlar", "u4"), ("stop_ndlar", "u4")])
+                           ("n_photons","f4")])
 
 vertices_dtype = np.dtype([("eventID","u4"),("x_vert","f4"),("y_vert","f4"),("z_vert","f4")])
 
@@ -34,7 +33,8 @@ depos_dtype = np.dtype([("eventID", "u4"), ("z_end", "f4"),
                         ("t0_start", "f8"), ("t0_end", "f8"), ("t0", "f8"),
                         ("dx", "f4"), ("dEdx", "f4"),
                         ("dE", "f4"), ("y", "f4"),
-                        ("x", "f4"), ("z", "f4")])
+                        ("x", "f4"), ("z", "f4"),
+                        ("start_inndLAr", "u4"), ("stop_inndLAr", "u4")])
 
 paramreco_dtype = np.dtype([("eventID", "u4"), ("cafTree_event", "u4"),
                             ("isFHC", "u4"), ("isCC", "u4"),
@@ -187,12 +187,7 @@ def dump(input_file, output_file, param_reco_file=None):
         # Dump the ND segments that have gone through geoEff translations and rotations
         segment = np.empty(event.nEdeps, dtype=segments_dtype)
         for (
-            i_seg, (
-                dep_E,
-                start_t, stop_t,
-                start_x, stop_x, start_y, stop_y, start_z, stop_z,
-                start_inLAr, stop_inLAr
-            )
+            i_seg, (dep_E, start_t, stop_t, start_x, stop_x, start_y, stop_y, start_z, stop_z)
         ) in enumerate(
             zip(
                 event.deps_E_MeV,
@@ -200,7 +195,6 @@ def dump(input_file, output_file, param_reco_file=None):
                 event.nd_deps_start_x_cm_nonecc, event.nd_deps_stop_x_cm_nonecc,
                 event.nd_deps_start_y_cm_nonecc, event.nd_deps_stop_y_cm_nonecc,
                 event.nd_deps_start_z_cm_nonecc, event.nd_deps_stop_z_cm_nonecc,
-                event.nd_deps_start_InNDLAr_nonecc, event.nd_deps_stop_InNDLAr_nonecc
             )
         ):
             segment[i_seg]["eventID"] = i_event
@@ -239,8 +233,6 @@ def dump(input_file, output_file, param_reco_file=None):
             segment[i_seg]["tran_diff"] = 0
             segment[i_seg]["pixel_plane"] = 0
             segment[i_seg]["n_photons"] = 0
-            segment[i_seg]["start_ndlar"] = start_inLAr
-            segment[i_seg]["stop_ndlar"] = stop_inLAr
         segments_list.append(segment)
 
         # Dump the FD deps + vertex.
@@ -254,14 +246,20 @@ def dump(input_file, output_file, param_reco_file=None):
 
         dep = np.empty(event.nEdeps, dtype=depos_dtype)
         for (
-            i_dep, (dep_E, start_t, stop_t, start_x, stop_x, start_y, stop_y, start_z, stop_z)
+            i_dep, (
+                dep_E,
+                start_t, stop_t,
+                start_x, stop_x, start_y, stop_y, start_z, stop_z,
+                start_inndLAr, stop_inndLAr
+            )
         ) in enumerate(
             zip(
                 event.deps_E_MeV,
                 event.deps_start_t_us, event.deps_stop_t_us,
                 event.fd_deps_start_x_cm_pair_nd_nonecc, event.fd_deps_stop_x_cm_pair_nd_nonecc,
                 event.fd_deps_start_y_cm_pair_nd_nonecc, event.fd_deps_stop_y_cm_pair_nd_nonecc,
-                event.fd_deps_start_z_cm_pair_nd_nonecc, event.fd_deps_stop_z_cm_pair_nd_nonecc
+                event.fd_deps_start_z_cm_pair_nd_nonecc, event.fd_deps_stop_z_cm_pair_nd_nonecc,
+                event.nd_deps_start_InNDLAr_nonecc, event.nd_deps_stop_InNDLAr_nonecc
             )
         ):
             dep[i_dep]["eventID"] = i_event
@@ -292,6 +290,8 @@ def dump(input_file, output_file, param_reco_file=None):
                 (dep[i_dep]["t0_start"] + dep[i_dep]["t0_end"]) / 2.
             )
             dep[i_dep]["dEdx"] = dep[i_dep]["dE"] / dx if dx > 0 else 0
+            dep[i_dep]["start_inndLAr"] = start_inndLAr
+            dep[i_dep]["stop_inndLAr"] = stop_inndLAr
         fd_depos_list.append(dep)
 
         # Dump genie primaries

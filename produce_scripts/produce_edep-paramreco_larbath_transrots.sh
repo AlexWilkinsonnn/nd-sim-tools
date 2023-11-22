@@ -185,7 +185,7 @@ cd $ND_CAFMAKER_DIR
           --oa ${OFFAXIS}
 cd ..
 
-# Reset env again for GeoEff rotataions+translation
+# Reset env again for GeoEff rotations+translation
 echo "Resetting env with env.sh"
 unset $(comm -2 -3 <(\
         printenv | sed 's/=.*//' | sort) <(\
