@@ -11,30 +11,26 @@ import h5py, fire
 from ROOT import TFile
 
 # Output array datatypes
-segments_dtype = np.dtype([("eventID", "u4"), ("z_end", "f4"),
-                           ("trackID", "u4"), ("tran_diff", "f4"),
-                           ("z_start", "f4"), ("x_end", "f4"),
-                           ("y_end", "f4"), ("n_electrons", "u4"),
-                           ("pdgId", "i4"), ("x_start", "f4"),
-                           ("y_start", "f4"), ("t_start", "f4"),
-                           ("t0_start", "f8"), ("t0_end", "f8"), ("t0", "f8"),
-                           ("dx", "f4"), ("long_diff", "f4"),
-                           ("pixel_plane", "i4"), ("t_end", "f4"),
-                           ("dEdx", "f4"), ("dE", "f4"), ("t", "f4"),
-                           ("y", "f4"), ("x", "f4"), ("z", "f4"),
-                           ("n_photons","f4")])
+segments_dtype = np.dtype([("eventID", "u4"), ("trackID", "u4"), ("uniqID", "u4"), ("pdgID", "i4"),
+                           ("x_start", "f4"), ("x_end", "f4"), ("x", "f4"),
+                           ("y_start", "f4"), ("y_end", "f4"), ("y", "f4"),
+                           ("z_start", "f4"), ("z_end", "f4"), ("z", "f4"),
+                           ("t_start", "f4"), ("t_end", "f4"), ("t", "f4"),
+                           ("t0_start", "f4"), ("t0_end", "f4"), ("t0", "f4"),
+                           ("n_electrons", "u4"), ("n_photons", "u4"),
+                           ("tran_diff", "f4"), ("long_diff", "f4"),
+                           ("dx", "f4"), ("dEdx", "f4"), ("dE", "f4"),
+                           ("pixel_plane", "i4")])
 
 vertices_dtype = np.dtype([("eventID","u4"),("x_vert","f4"),("y_vert","f4"),("z_vert","f4")])
 
-depos_dtype = np.dtype([("eventID", "u4"), ("z_end", "f4"),
-                        ("z_start", "f4"), ("x_end", "f4"),
-                        ("y_end", "f4"), ("x_start", "f4"),
-                        ("y_start", "f4"), ("t_start", "f4"),
+depos_dtype = np.dtype([("eventID", "u4"), ("uniqID", "u4"),
+                        ("x_start", "f4"), ("x_end", "f4"), ("x", "f4"),
+                        ("y_start", "f4"), ("y_end", "f4"), ("y", "f4"),
+                        ("z_start", "f4"), ("z_end", "f4"), ("z", "f4"),
                         ("t0_start", "f8"), ("t0_end", "f8"), ("t0", "f8"),
-                        ("dx", "f4"), ("dEdx", "f4"),
-                        ("dE", "f4"), ("y", "f4"),
-                        ("x", "f4"), ("z", "f4"),
-                        ("start_inndLAr", "u4"), ("stop_inndLAr", "u4")])
+                        ("dx", "f4"), ("dEdx", "f4"), ("dE", "f4"),
+                        ("outsideNDLAr", "i4")])
 
 paramreco_dtype = np.dtype([("eventID", "u4"), ("cafTree_event", "u4"),
                             ("isFHC", "u4"), ("isCC", "u4"),
@@ -187,7 +183,9 @@ def dump(input_file, output_file, param_reco_file=None):
         # Dump the ND segments that have gone through geoEff translations and rotations
         segment = np.empty(event.nEdeps, dtype=segments_dtype)
         for (
-            i_seg, (dep_E, start_t, stop_t, start_x, stop_x, start_y, stop_y, start_z, stop_z)
+            i_seg, (
+                dep_E, start_t, stop_t, start_x, stop_x, start_y, stop_y, start_z, stop_z, trackID
+            )
         ) in enumerate(
             zip(
                 event.deps_E_MeV,
@@ -195,6 +193,7 @@ def dump(input_file, output_file, param_reco_file=None):
                 event.nd_deps_start_x_cm_nonecc, event.nd_deps_stop_x_cm_nonecc,
                 event.nd_deps_start_y_cm_nonecc, event.nd_deps_stop_y_cm_nonecc,
                 event.nd_deps_start_z_cm_nonecc, event.nd_deps_stop_z_cm_nonecc,
+                event.deps_trkID
             )
         ):
             segment[i_seg]["eventID"] = i_event
@@ -233,6 +232,8 @@ def dump(input_file, output_file, param_reco_file=None):
             segment[i_seg]["tran_diff"] = 0
             segment[i_seg]["pixel_plane"] = 0
             segment[i_seg]["n_photons"] = 0
+            segment[i_seg]["trackID"] = trackID
+            segment[i_seg]["uniqID"] = i_seg
         segments_list.append(segment)
 
         # Dump the FD deps + vertex.
@@ -246,12 +247,7 @@ def dump(input_file, output_file, param_reco_file=None):
 
         dep = np.empty(event.nEdeps, dtype=depos_dtype)
         for (
-            i_dep, (
-                dep_E,
-                start_t, stop_t,
-                start_x, stop_x, start_y, stop_y, start_z, stop_z,
-                start_inndLAr, stop_inndLAr
-            )
+            i_dep, (dep_E, start_t, stop_t, start_x, stop_x, start_y, stop_y, start_z, stop_z)
         ) in enumerate(
             zip(
                 event.deps_E_MeV,
@@ -259,7 +255,6 @@ def dump(input_file, output_file, param_reco_file=None):
                 event.fd_deps_start_x_cm_pair_nd_nonecc, event.fd_deps_stop_x_cm_pair_nd_nonecc,
                 event.fd_deps_start_y_cm_pair_nd_nonecc, event.fd_deps_stop_y_cm_pair_nd_nonecc,
                 event.fd_deps_start_z_cm_pair_nd_nonecc, event.fd_deps_stop_z_cm_pair_nd_nonecc,
-                event.nd_deps_start_InNDLAr_nonecc, event.nd_deps_stop_InNDLAr_nonecc
             )
         ):
             dep[i_dep]["eventID"] = i_event
@@ -290,8 +285,8 @@ def dump(input_file, output_file, param_reco_file=None):
                 (dep[i_dep]["t0_start"] + dep[i_dep]["t0_end"]) / 2.
             )
             dep[i_dep]["dEdx"] = dep[i_dep]["dE"] / dx if dx > 0 else 0
-            dep[i_dep]["start_inndLAr"] = start_inndLAr
-            dep[i_dep]["stop_inndLAr"] = stop_inndLAr
+            dep[i_dep]["uniqID"] = i_dep
+            dep[i_dep]["outsideNDLAr"] = -1
         fd_depos_list.append(dep)
 
         # Dump genie primaries
