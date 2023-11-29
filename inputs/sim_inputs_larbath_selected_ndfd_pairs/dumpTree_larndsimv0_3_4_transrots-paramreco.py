@@ -76,13 +76,14 @@ lepton_dtype = np.dtype([("eventID", "u4"),
                          ("lep_ke_outside_ndlar_MeV", "f4")])
 
 # Prep HDF5 file for writing
-def initHDF5File(output_file):
+def initHDF5File(output_file, paramreco):
     with h5py.File(output_file, 'w') as f:
         f.create_dataset('segments', (0,), dtype=segments_dtype, maxshape=(None,))
         f.create_dataset('vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
         f.create_dataset('fd_deps', (0,), dtype=depos_dtype, maxshape=(None,))
         f.create_dataset('fd_vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
-        f.create_dataset('nd_paramreco', (0,), dtype=paramreco_dtype, maxshape=(None,))
+        if paramreco:
+            f.create_dataset('nd_paramreco', (0,), dtype=paramreco_dtype, maxshape=(None,))
         f.create_dataset('primaries', (0,), dtype=primaries_dtype, maxshape=(None,))
         f.create_dataset('lepton', (0,), dtype=lepton_dtype, maxshape=(None,))
 
@@ -152,7 +153,7 @@ def dump(input_file, output_file, param_reco_file=None):
         paramrecoTree_itr = iter(paramrecoTree)
 
     # Prep output file
-    initHDF5File(output_file)
+    initHDF5File(output_file, param_reco_file is not None)
 
     segments_list = list()
     fd_depos_list = list()
