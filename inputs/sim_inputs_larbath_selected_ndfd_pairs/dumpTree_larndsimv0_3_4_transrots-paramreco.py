@@ -132,8 +132,7 @@ def updateHDF5File(
                 f['lepton'][nlep:] = lepton
 
 # Read a file and dump it.
-def dump(input_file, output_file, param_reco_file=None):
-
+def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
     # The input file is generated in a previous test (100TestTree.sh).
     inputFile = TFile(input_file)
 
@@ -169,6 +168,18 @@ def dump(input_file, output_file, param_reco_file=None):
 
         if not event.nd_fd_throws_passed:
             print("Throws for event {} failed, skipping".format(i_event))
+            if param_reco_file is not None:
+                next(paramrecoTree_itr)
+            continue
+
+        # Events that result in generate no packets in larnd-sim stage cause problems so try to
+        # minimise these. Shouldn't be selecting these events anyway
+        if event.nEdeps < min_nEdeps:
+            print(
+                "Event has too few energy deposition {} < {}, skipping".format(
+                    event.nEdeps, min_nEdeps
+                )
+            )
             if param_reco_file is not None:
                 next(paramrecoTree_itr)
             continue
