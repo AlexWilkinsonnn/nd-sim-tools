@@ -29,6 +29,9 @@ N_throws = 64*64
 N_THROWS_FD = 1
 max_nd_throws = 20
 max_fd_throws = 20
+# Cut on mu nn probability 
+nd_contained_mu_cut = 0.5
+nd_tracker_mu_cut = 0.5
 
 # Active volume for FD unit [cm]
 FDActiveVol_min = [-370., -600.,    0.]
