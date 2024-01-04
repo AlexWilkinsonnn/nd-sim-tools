@@ -16,8 +16,8 @@ SAVE_NDFD_ROOT=false # nd and fd depo data after translation + rotation throws t
 SAVE_PAIR_H5=true # nd-fd paired data file
 
 # These dirs need to be in the job tarball
-INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
-TRANSROTS_DIR="DUNE_ND_GeoEff"
+INPUTS_DIR="inputs/sim_inputs_larbath_selected_ndfd_pairs"
+TRANSROTS_DIR="inputs/DUNE_ND_GeoEff"
 
 GEOMETRY_LARBATH="LArBath_ndtopvol.gdml"
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
