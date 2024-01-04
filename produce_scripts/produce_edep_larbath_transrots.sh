@@ -187,8 +187,12 @@ cd ../../
 echo "Running nd-fd pair maker"
 ls -lrth
 ls -lrth n2fd_outputs/*
+cd ${INPUT_TAR_DIR_LOCAL}
+commit=$(git rev-parse HEAD)
+cd -
 python dumpTree_larndsimv0_3_4_transrots-paramreco.py n2fd_outputs/root_out/n2fd_paired_out.root \
-                                                      ${HORN}.${RNDSEED}.ndfd_pairs.h5
+                                                      ${HORN}.${RNDSEED}.ndfd_pairs.h5 \
+                                                      --commit "$commit"
 
 echo "Copying files to dCache..."
 if [ "$SAVE_GENIE" = true ]; then

@@ -76,16 +76,23 @@ lepton_dtype = np.dtype([("eventID", "u4"),
                          ("lep_ke_outside_ndlar_MeV", "f4")])
 
 # Prep HDF5 file for writing
-def initHDF5File(output_file, paramreco):
+def initHDF5File(output_file, paramreco, commit):
     with h5py.File(output_file, 'w') as f:
         f.create_dataset('segments', (0,), dtype=segments_dtype, maxshape=(None,))
+        f["segments"].attrs["nd-sim-tools commit"] = commit
         f.create_dataset('vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
+        f["vertices"].attrs["nd-sim-tools commit"] = commit
         f.create_dataset('fd_deps', (0,), dtype=depos_dtype, maxshape=(None,))
+        f["fd_deps"].attrs["nd-sim-tools commit"] = commit
         f.create_dataset('fd_vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
+        f["fd_vertices"].attrs["nd-sim-tools commit"] = commit
         if paramreco:
             f.create_dataset('nd_paramreco', (0,), dtype=paramreco_dtype, maxshape=(None,))
+            f["nd_paramreco"].attrs["nd-sim-tools commit"] = commit
         f.create_dataset('primaries', (0,), dtype=primaries_dtype, maxshape=(None,))
+        f["primaries"].attrs["nd-sim-tools commit"] = commit
         f.create_dataset('lepton', (0,), dtype=lepton_dtype, maxshape=(None,))
+        f["lepton"].attrs["nd-sim-tools commit"] = commit
 
 # Resize HDF5 file and save output arrays
 def updateHDF5File(
@@ -132,7 +139,7 @@ def updateHDF5File(
                 f['lepton'][nlep:] = lepton
 
 # Read a file and dump it.
-def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
+def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20, commit="empty"):
     # The input file is generated in a previous test (100TestTree.sh).
     inputFile = TFile(input_file)
 
@@ -152,7 +159,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
         paramrecoTree_itr = iter(paramrecoTree)
 
     # Prep output file
-    initHDF5File(output_file, param_reco_file is not None)
+    initHDF5File(output_file, param_reco_file is not None, commit)
 
     segments_list = list()
     fd_depos_list = list()
