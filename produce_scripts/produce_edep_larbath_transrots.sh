@@ -16,14 +16,14 @@ SAVE_NDFD_ROOT=false # nd and fd depo data after translation + rotation throws t
 SAVE_PAIR_H5=true # nd-fd paired data file
 
 # These dirs need to be in the job tarball
-INPUTS_DIR="inputs/sim_inputs_larbath_selected_ndfd_pairs"
-TRANSROTS_DIR="inputs/DUNE_ND_GeoEff"
+INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
+TRANSROTS_DIR="DUNE_ND_GeoEff"
 
 GEOMETRY_LARBATH="LArBath_ndtopvol.gdml"
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
 TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
-EDEPSIM_ANA_CFG="UserConfig_4000throws.py"
+EDEPSIM_ANA_CFG="UserConfig_10000throws.py"
 
 MODE="neutrino"
 HORN="FHC"
@@ -187,12 +187,8 @@ cd ../../
 echo "Running nd-fd pair maker"
 ls -lrth
 ls -lrth n2fd_outputs/*
-cd ${INPUT_TAR_DIR_LOCAL}
-commit=$(git rev-parse HEAD)
-cd -
 python dumpTree_larndsimv0_3_4_transrots-paramreco.py n2fd_outputs/root_out/n2fd_paired_out.root \
-                                                      ${HORN}.${RNDSEED}.ndfd_pairs.h5 \
-                                                      --commit "$commit"
+                                                      ${HORN}.${RNDSEED}.ndfd_pairs.h5
 
 echo "Copying files to dCache..."
 if [ "$SAVE_GENIE" = true ]; then
