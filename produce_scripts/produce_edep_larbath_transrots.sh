@@ -23,7 +23,7 @@ GEOMETRY_LARBATH="LArBath_ndtopvol.gdml"
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
 TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
-EDEPSIM_ANA_CFG="UserConfig_10000throws.py"
+EDEPSIM_ANA_CFG="UserConfig_4000throws.py"
 
 MODE="neutrino"
 HORN="FHC"
