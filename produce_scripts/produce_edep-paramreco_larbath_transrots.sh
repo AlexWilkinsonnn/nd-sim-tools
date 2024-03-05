@@ -3,6 +3,10 @@
 # Script to produce edep-sim in LArBath geometry to process through
 # rotation + translation throws to make ECC corrected ND-FD pairs.
 # Also run through normal ND geometry to produce parameterised reco.
+# IMPORTANT NOTE: This param reco comes from resimulating the primary particles
+# in the ND geometry. So it is not a energy deposition level match to the FD
+# info (which is simulated using LArBath) but is useful for
+# easy access to truth information and approximate validation
 ################################################################################
 # Options
 
@@ -28,7 +32,7 @@ GEOMETRY_LARBATH="LArBath_ndtopvol.gdml"
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
 TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
-EDEPSIM_ANA_CFG="UserConfig_4000throws.py"
+EDEPSIM_ANA_CFG="UserConfig_10000throws.py"
 
 MODE="neutrino"
 HORN="FHC"
@@ -205,7 +209,9 @@ setup edepsim v3_2_0 -q e20:prof
 
 python -m venv .venv_3.9.2_ndfd_pairs
 source .venv_3.9.2_ndfd_pairs/bin/activate
-pip install torch scipy h5py fire
+# scipy 1.10 is the latest version compatible with edep-sim's numpy version 1.20.1 which the
+# the venv cannot overwrite
+pip install torch scipy==1.10 h5py fire
 if [ "$INTERACTIVE" = true ]; then
   export PYTHONPATH=${PWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
   export LD_LIBRARY_PATH=${PWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
