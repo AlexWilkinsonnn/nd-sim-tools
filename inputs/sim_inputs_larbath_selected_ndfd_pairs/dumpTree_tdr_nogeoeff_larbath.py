@@ -1,5 +1,16 @@
 #!/usr/bin/env python
-
+"""
+dumpTree.py taken from last_unstructured_cafs tag of ND_CAFMaker.
+Removed geometric efficiency stuff.
+Uses a separate gdml file for checking which ND hall volumes segments are in. Doing this so the
+reco can be applied to LArBath edep-sim events so long as the vertex was generated in the ND hall
+geometry coordinates. The separate gdml file is passed through a dummy edep-sim files that has
+an "EDepSimGeometry" branch. When passing the actual gdml I ran into units (cm and mm) issues.
+NOTE: there are problems with doing this. The magnetic field of ND-GAr is not being simulated so
+the variables that determine if the muon is tracker matched with GAr/ECAL
+(distance muon travels in respective geometry) will be a bit wrong since the track will not be
+bending.
+"""
 import sys
 import os.path
 import os
@@ -49,6 +60,9 @@ def loop( evt, tgeo, tout ):
         if ient % 100 == 0:
             print "Event %d of %d..." % (ient,N)
         events.GetEntry(ient)
+
+        t_eventID[0] = -1;
+        t_eventID[0] = event.EventId;
 
         for ivtx,vertex in enumerate(event.Primaries):
 
@@ -148,7 +162,7 @@ def loop( evt, tgeo, tout ):
                 t_lepDeath[1] = endpt.Y()/10. - offset[1]
                 t_lepDeath[2] = endpt.Z()/10. - offset[2]
 
-                endVolName = node.GetName()
+                endVolName = node.GetName() if node else "larbath"
                 t_muon_endVolName.replace(0, ROOT.std.string.npos, endVolName)
                 if "LArActive" in endVolName: t_muonReco[0] = 1 # contained
                 elif "ECal" in endVolName: t_muonReco[0] = 3 # ECAL stopper
@@ -156,9 +170,29 @@ def loop( evt, tgeo, tout ):
 
                 # look for muon hits in the gas TPC
                 hits = []
+                # cntr_volNames = {}
                 for key in event.SegmentDetectors:
-                    if key.first in ["TPC_Drift1", "TPC_Drift2"]:
-                        hits += key.second
+                    for hit in key.second:
+                        hMid = ROOT.TVector3(
+                            (hit.Start[0] + hit.Stop[0])/2,
+                            (hit.Start[1] + hit.Stop[1])/2,
+                            (hit.Start[2] + hit.Stop[2])/2,
+                        )
+                        node = tgeo.FindNode(hMid.X(), hMid.Y(), hMid.Z())
+                        if not node:
+                            # print hMid.X()/10., hMid.Y()/10., hMid.Z()/10.
+                            # print ""
+                            continue
+                        volName = node.GetName()
+                        # if volName not in cntr_volNames:
+                        #     cntr_volNames[volName] = 1
+                        # else:
+                        #     cntr_volNames[volName] += 1
+                        if volName in ["TPC_Drift1", "TPC_Drift2"]:
+                            hits.append(hit)
+
+                # print cntr_volNames
+                # print ""
 
                 tot_length = 0.0
                 for hit in hits:
@@ -171,8 +205,18 @@ def loop( evt, tgeo, tout ):
                 # look for muon hits in the ECAL
                 ehits = []
                 for key in event.SegmentDetectors:
-                    if key.first in ["BarrelECal_vol", "EndcapECal_vol"]:
-                        ehits += key.second
+                    for hit in key.second:
+                        hMid = ROOT.TVector3(
+                            (hit.Start[0] + hit.Stop[0])/2,
+                            (hit.Start[1] + hit.Stop[1])/2,
+                            (hit.Start[2] + hit.Stop[2])/2
+                        )
+                        node = tgeo.FindNode(hMid.X(), hMid.Y(), hMid.Z())
+                        if not node:
+                            continue
+                        volName = node.GetName()
+                        if volName in ["BarrelECal_vol", "EndcapECal_vol"]:
+                            ehits.append(hit)
 
                 etot_length = 0.0
                 for hit in ehits:
@@ -190,8 +234,18 @@ def loop( evt, tgeo, tout ):
             # hadronic containment -- find hits in ArgonCube
             hits = []
             for key in event.SegmentDetectors:
-                if key.first == "ArgonCube":
-                    hits += key.second
+                for hit in key.second:
+                    hMid = ROOT.TVector3(
+                        (hit.Start[0] + hit.Stop[0])/2,
+                        (hit.Start[1] + hit.Stop[1])/2,
+                        (hit.Start[2] + hit.Stop[2])/2
+                    )
+                    node = tgeo.FindNode(hMid.X(), hMid.Y(), hMid.Z())
+                    if not node:
+                        continue
+                    volName = node.GetName()
+                    if volName == "ArgonCube":
+                        hits.append(hit)
 
             # Truth-matching energy -- make dictionary of trajectory --> primary pdg
             traj_to_pdg = {}
@@ -322,7 +376,15 @@ if __name__ == "__main__":
     ROOT.gROOT.SetBatch(1)
 
     parser = OptionParser()
-    parser.add_option('--infile', help='Input file name', default="edep.root")
+    parser.add_option('--infile_edepsim', help='Input edep-sim file name', default="edep.root")
+    parser.add_option(
+        '--edepsim_geometry',
+        help=(
+            'dummy edep-sim file that contrains on a branch' +
+            'the gdml to use for checking which volumes energy depositions are in'
+        ),
+        default="geometry.gdml"
+    )
     parser.add_option('--outfile', help='Output file name', default="out.root")
     parser.add_option('--seed', help='Seed for geometric efficiency throws', default=0, type = "int")
 
@@ -331,6 +393,9 @@ if __name__ == "__main__":
     # make an output ntuple
     fout = ROOT.TFile( args.outfile, "RECREATE" )
     tout = ROOT.TTree( "tree","tree" )
+    # include edep-sim eventID for matching translation results
+    t_eventID = array('i',[0])
+    tout.Branch('eventID', t_eventID, 'eventID/I')
     t_ievt = array('i',[0])
     tout.Branch('ievt',t_ievt,'ievt/I')
     t_Ev = array('f', [0.])
@@ -410,11 +475,12 @@ if __name__ == "__main__":
     events = ROOT.TChain( "EDepSimEvents", "main event tree" )
     #dspt = ROOT.TChain( "DetSimPassThru/gRooTracker", "other thing" )
 
-    tf = ROOT.TFile( args.infile )
+    tf = ROOT.TFile( args.infile_edepsim )
     tf.MakeProject("EDepSimEvents","*","RECREATE++")
 
     events = tf.Get( "EDepSimEvents" )
-    tgeo = tf.Get("EDepSimGeometry")
+    tf_dummy = ROOT.TFile(args.edepsim_geometry)
+    tgeo = tf_dummy.Get("EDepSimGeometry")
     loop( events, tgeo, tout )
 
     fout.cd()
