@@ -1,7 +1,9 @@
 *.tar.gz
 *.root
+!edep_dummy_MPD_SPY_LAr_geo.root
 file_nums**.txt
 .venv*
+*.swp
 
 /test_area*
 
