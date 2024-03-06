@@ -1,13 +1,11 @@
 *.tar.gz
 *.root
+!edep_dummy_MPD_SPY_LAr_geo.root
 file_nums**.txt
 .venv*
+*.swp
 
 /test_area*
 
 /inputs/DUNE_ND_GeoEff/.git*
-/inputs/DUNE_ND_GeoEff/pybind11
-/inputs/DUNE_ND_GeoEff/bin
-/inputs/DUNE_ND_GeoEff/lib
-/inputs/DUNE_ND_GeoEff/tests
-/inputs/DUNE_ND_GeoEff/tools
+/inputs/DUNE_ND_GeoEff/pybind11/.git*
