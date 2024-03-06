@@ -20,6 +20,20 @@ import xml.etree.ElementTree as ET
 from array import array
 from math import cos, sin
 
+# Just grepped the gdml for 'auxval="BarrelECal_vol"' and 'auxvalue="EndcapECal_vol"' to get these
+SENSDET_BARRELECALS = set(
+    "BarrelECal_stave%02d_module%02d_layer_%02d_slice2_vol" % (stave, module, layer)
+    for stave in range(1, 9)
+        for module in range(1,6)
+            for layer in range(1, 61)
+)
+SENSDET_ENDCAPECALS = set(
+    "EndcapECal_stave%02d_module%02d_layer_%02d_slice2_vol" % (stave, module, layer)
+    for stave in range(1, 5)
+        for module in [0, 6]
+            for layer in range(1, 61)
+)
+
 def loop( evt, tgeo, tout ):
 
     offset = [ 0., 5.5, 411. ]
@@ -188,7 +202,9 @@ def loop( evt, tgeo, tout ):
                         #     cntr_volNames[volName] = 1
                         # else:
                         #     cntr_volNames[volName] += 1
-                        if volName in ["TPC_Drift1", "TPC_Drift2"]:
+                        # vol names are like "name_PV_{0,1,2,...}" since volumes can be referenced
+                        # multiple times in the gdml. Strip off the PV_{0,...} bit.
+                        if ("_").join(volName.split("_")[:-2]) in ["TPC_Drift1", "TPC_Drift2"]:
                             hits.append(hit)
 
                 # print cntr_volNames
@@ -215,7 +231,10 @@ def loop( evt, tgeo, tout ):
                         if not node:
                             continue
                         volName = node.GetName()
-                        if volName in ["BarrelECal_vol", "EndcapECal_vol"]:
+                        if (
+                            ("_").join(volName.split("_")[:-2]) in
+                            SENSDET_BARRELECALS.union(SENSDET_ENDCAPECALS)
+                        ):
                             ehits.append(hit)
 
                 etot_length = 0.0
@@ -244,7 +263,7 @@ def loop( evt, tgeo, tout ):
                     if not node:
                         continue
                     volName = node.GetName()
-                    if volName == "ArgonCube":
+                    if ("_").join(volName.split("_")[:-2]) == "volLArActive":
                         hits.append(hit)
 
             # Truth-matching energy -- make dictionary of trajectory --> primary pdg
@@ -313,11 +332,6 @@ def loop( evt, tgeo, tout ):
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
                         collar_energy += hit.EnergyDeposit
                     
-                    # Set up arrays for geometric efficiency
-                    for dim in range(3) :
-                        geoEff_EDepPosition.append((hit.Start[dim] + hit.Stop[dim])/2./10.)
-                    geoEff_EDepEnergy.append(hit.EnergyDeposit)
-
                     # Determine primary particle
                     pdg = traj_to_pdg[traj]
                     if pdg in [11, -11, 13, -13]: continue # lepton
