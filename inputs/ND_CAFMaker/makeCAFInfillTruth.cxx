@@ -187,6 +187,8 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   float p3lep[3], vtx[3], muonExitPt[3], muonExitMom[3];
   int fsPdg[100];
   float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsTrkLen[100], fsTrkLenPerp[100];
+  int vtxInGap;
+  float hadEFracInGap, lepEFracInGap;
   tree->SetBranchAddress( "ievt", &ievt );
   tree->SetBranchAddress( "lepPdg", &lepPdg );
   tree->SetBranchAddress( "muonReco", &muonReco );
@@ -217,6 +219,10 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp );
 
   tree->SetBranchAddress( "geoEffThrowResults", &caf.geoEffThrowResults );
+
+  tree->SetBranchAddress( "vtxInGap", &vtxInGap );
+  tree->SetBranchAddress( "hadEFracInGap", &hadEFracInGap );
+  tree->SetBranchAddress( "lepEFracInGap", &lepEFracInGap );
 
   caf.pot = gtree->GetWeight();
   gtree->SetBranchAddress( "gmcrec", &caf.mcrec );
@@ -321,6 +327,11 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
     caf.LepMomZ = lepP4.Z();
     caf.LepE = lepP4.E();
     caf.LepNuAngle = nuP4.Angle( lepP4.Vect() );
+
+    // Add infill truth info
+    caf.vtxInGap = vtxInGap;
+    caf.hadEFracInGap = hadEFracInGap;
+    caf.lepEFracInGap = lepEFracInGap;
 
     //--------------------------------------------------------------------------
     // Parameterized reconstruction
