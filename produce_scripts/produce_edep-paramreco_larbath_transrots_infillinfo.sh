@@ -177,13 +177,13 @@ python dumpTree_nogeoeff_larbath_infillinfo.py --infile edep_larbath.${RNDSEED}.
 
 echo "Running makeCAF"
 cd $ND_CAFMAKER_DIR
-./makeCAF --infile ../edep_dump_larbath_nd.${RNDSEED}.root \
-          --gfile ../${MODE}.${RNDSEED}.ghep.root \
-          --outfile ../${HORN}.${RNDSEED}.nd.CAF.root \
-          --fhicl ../fhicl.fcl \
-          --seed ${RNDSEED} \
-          ${RHC} \
-          --oa ${OFFAXIS}
+./makeCAFInfillInfo --infile ../edep_dump_larbath_nd.${RNDSEED}.root \
+                    --gfile ../${MODE}.${RNDSEED}.ghep.root \
+                    --outfile ../${HORN}.${RNDSEED}.nd.CAF.root \
+                    --fhicl ../fhicl.fcl \
+                    --seed ${RNDSEED} \
+                    ${RHC} \
+                    --oa ${OFFAXIS}
 cd ..
 
 # Reset env again for GeoEff rotations+translation
@@ -228,7 +228,7 @@ cd ../../
 echo "Running nd-fd pair maker"
 ls -lrth
 ls -lrth n2fd_outputs/*
-python dumpTree_larndsimv0_3_4_transrots-paramreco.py --param_reco_file ${HORN}.${RNDSEED}.nd.CAF.root \
+python dumpTree_larndsimv0_3_4_transrots-paramreco_infillinfo.py --param_reco_file ${HORN}.${RNDSEED}.nd.CAF.root \
                                                       n2fd_outputs/root_out/n2fd_paired_out.root \
                                                       ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
 
