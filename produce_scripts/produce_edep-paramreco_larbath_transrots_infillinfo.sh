@@ -21,7 +21,7 @@ SAVE_EDEP=false # edep-sim output
 SAVE_EDEP_MAKECAF=false # summarised edep-sim for parameterised reco in mackeCAF
 SAVE_CAF=false # currently parameterised reco caf
 SAVE_NDFD_ROOT=false # nd and fd depo data after translation + rotation throws to select
-SAVE_PAIR_H5=false # nd-fd paired data file
+SAVE_PAIR_H5=true # nd-fd paired data file
 
 # These dirs need to be in the job tarball
 INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
@@ -46,7 +46,7 @@ FLUXDIR="/cvmfs/dune.osgstorage.org/pnfs/fnal.gov/usr/dune/persistent/stash/Flux
 OFFAXIS=0
 OADIR="0m"
 
-INTERACTIVE=true # not running on grid
+INTERACTIVE=false # not running on grid
 
 FIRST=$1
 NPOT=$2 # 1e14 ~ 20-30 events
