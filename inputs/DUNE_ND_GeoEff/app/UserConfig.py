@@ -32,6 +32,11 @@ max_fd_throws = 20
 # Cut on mu nn probability 
 nd_contained_mu_cut = 0.5
 nd_tracker_mu_cut = 0.5
+# Hadronic veto selection crtieria
+nd_veto_region_size = 30 # cm
+nd_veto_threshold_energy = 30 # MeV
+fd_veto_region_size = 30 # cm
+fd_veto_threshold_energy = 30 # MeV
 
 # Active volume for FD unit [cm]
 FDActiveVol_min = [-370., -600.,    0.]

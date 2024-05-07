@@ -374,12 +374,6 @@ for jentry in range(entries):
     # Use neutrino decay position, rather than fixed neutrino direction as symmetry axis
     geoEff.setUseFixedBeamDir(False)
 
-    # 30 cm veto region for hadronic veto
-    geoEff.setVetoSizes([30])
-
-    # 30 MeV E threshold for hadronic veto
-    geoEff.setVetoEnergyThresholds([30])
-
     # Near detector active dimensions for hadronic veto
     geoEff.setActiveX(NDActiveVol_min[0], NDActiveVol_max[0])
     geoEff.setActiveY(NDActiveVol_min[1], NDActiveVol_max[1])
@@ -429,6 +423,10 @@ for jentry in range(entries):
     # If after max_nd_throws still don't pass at nd, stop and move to next event (otherwise too much computing resources)
     while tot_nd_throw < max_nd_throws:
         print ("-- tot nd throw:", tot_nd_throw)
+        # Configure veto region for hadronic veto for ND throws
+        geoEff.setVetoSizes([nd_veto_region_size])
+        # Configure E threshold for hadronic veto for ND throws
+        geoEff.setVetoEnergyThresholds([nd_veto_threshold_energy])
 
         ####################################
         # Only do one throw in ND at a time
@@ -629,6 +627,11 @@ for jentry in range(entries):
 
                     # Tell the module where the vertex is in FD
                     geoEff.setVertexFD(0, 0, 0) # it's at FD origin because we moved it to origin and then just rotated at there
+
+                    # Configure veto region for hadronic veto for FD throws
+                    geoEff.setVetoSizes([fd_veto_region_size])
+                    # Configure E threshold for hadronic veto for FD throws
+                    geoEff.setVetoEnergyThresholds([fd_veto_threshold_energy])
 
                     tot_fd_throw_pair_nd_nonecc = 0
 
