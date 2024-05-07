@@ -238,10 +238,9 @@ if [ "$SAVE_GENIE" = true ]; then
 fi
 if [ "$SAVE_EDEP" = true ]; then
   ifdh cp edep_larbath.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_larbath.root
-  ifdh cp edep_nd.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_nd.root
 fi
 if [ "$SAVE_EDEP_MAKECAF" = true ]; then
-  ifdh cp edep_dump.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_dump.root
+  ifdh cp edep_dump_larbath_nd.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_dump_larbath_nd.root
 fi
 if [ "$SAVE_CAF" = true ]; then
   ifdh cp ${HORN}.${RNDSEED}.nd.CAF.root ${CAF_OUTPATH}/${HORN}.${RNDSEED}.nd.CAF.root
