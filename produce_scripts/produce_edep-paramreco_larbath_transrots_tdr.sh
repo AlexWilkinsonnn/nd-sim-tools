@@ -9,17 +9,18 @@
 ################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/genie"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/edep"
-CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/caf"
-NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/pair_root"
-PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/caf"
+NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_root"
+PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
 
-SAVE_GENIE=false
-SAVE_EDEP=false # edep-sim output
-SAVE_EDEP_MAKECAF=false # summarised edep-sim for parameterised reco in mackeCAF
-SAVE_CAF=false # currently parameterised reco caf
-SAVE_NDFD_ROOT=false # nd and fd depo data after translation + rotation throws to select
+SAVE_GENIE=true
+SAVE_GTRAC=true
+SAVE_EDEP=true # edep-sim output
+SAVE_EDEP_MAKECAF=true # summarised edep-sim for parameterised reco in mackeCAF
+SAVE_CAF=true # currently parameterised reco caf
+SAVE_NDFD_ROOT=true # nd and fd depo data after translation + rotation throws to select
 SAVE_PAIR_H5=true # nd-fd paired data file
 
 # These dirs need to be in the job tarball
@@ -157,6 +158,16 @@ edep-sim -C \
          -e ${NPER} \
          $EDEP_MAC
 
+# The ND hall is not best-represented by an infinite LAr bath, so the 
+# simulation is improved by re-simulating just the muon in the ND hall. We 
+# run edep-sim just on the muon in the ND hall so that the hadronic energy 
+# deposits remain identical.
+edep-sim -C \
+         -g ${GEOMETRY_ND} \
+         -o edep_ND.${RNDSEED}.root \
+         -e ${NPER} \
+         $EDEP_MAC
+
 # Want to rollback environment to use old ND_CAFMaker scripts
 # Unset all new env vars and then source the old env - probably overkill but it works
 echo "Resetting env with env.sh"
@@ -173,16 +184,21 @@ echo "Running makeCAF dumpTree"
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_larbath.${RNDSEED}.root \
                                         --edepsim_geometry ${GEOMETRY_ND_DUMMY_EDEP} \
                                         --outfile edep_dump_larbath_nd.${RNDSEED}.root \
+python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root \
+                                        --edepsim_geometry ${GEOMETRY_ND} \
+                                        --outfile edep_dump_ND_nd.${RNDSEED}.root \
+
 
 echo "Running makeCAF"
 cd $ND_CAFMAKER_DIR
-./makeCAF --infile ../edep_dump_larbath_nd.${RNDSEED}.root \
-          --gfile ../${MODE}.${RNDSEED}.ghep.root \
-          --outfile ../${HORN}.${RNDSEED}.nd.CAF.root \
-          --fhicl ../fhicl.fcl \
-          --seed ${RNDSEED} \
-          ${RHC} \
-          --oa ${OFFAXIS}
+./makeCAF_resim-muon --infile ../edep_dump_larbath_nd.${RNDSEED}.root \
+					 --infile_resim ../edep_dump_ND_nd.${RNDSEED}.root \
+          			 --gfile ../${MODE}.${RNDSEED}.ghep.root \
+          			 --outfile ../${HORN}.${RNDSEED}.nd.CAF.root \
+          			 --fhicl ../fhicl.fcl \
+          			 --seed ${RNDSEED} \
+          			 ${RHC} \
+          			 --oa ${OFFAXIS}
 cd ..
 
 # Reset env again for GeoEff rotations+translation
@@ -235,11 +251,16 @@ echo "Copying files to dCache..."
 if [ "$SAVE_GENIE" = true ]; then
   ifdh cp ${MODE}.${RNDSEED}.ghep.root ${GENIE_OUTPATH}/${HORN}.${RNDSEED}.ghep.root
 fi
+if [ "$SAVE_GTRAC" = true ]; then
+  ifdh cp ${MODE}.${RNDSEED}.gtrac.root ${GENIE_OUTPATH}/${HORN}.${RNDSEED}.gtrac.root
+fi
 if [ "$SAVE_EDEP" = true ]; then
   ifdh cp edep_larbath.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_larbath.root
+  ifdh cp edep_ND.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_ND.root
 fi
 if [ "$SAVE_EDEP_MAKECAF" = true ]; then
   ifdh cp edep_dump_larbath_nd.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_dump_larbath_nd.root
+  ifdh cp edep_dump_ND_nd.${RNDSEED}.root ${EDEP_OUTPATH}/${HORN}.${RNDSEED}.edep_dump_ND_nd.root
 fi
 if [ "$SAVE_CAF" = true ]; then
   ifdh cp ${HORN}.${RNDSEED}.nd.CAF.root ${CAF_OUTPATH}/${HORN}.${RNDSEED}.nd.CAF.root

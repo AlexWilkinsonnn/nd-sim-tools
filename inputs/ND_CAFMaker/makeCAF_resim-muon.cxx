@@ -1,5 +1,10 @@
 /////////////////////////////////////////////////////////////////////////////////
-// makeCAF without nusystematics and with an eventID tree
+// makeCAF_resim-muon without nusystematics and with an eventID tree
+// Identical to makeCAF, but takes in a second input file that has the same 
+// events except simulated in a different environment. The primary use case 
+// is if the original file was simulated in LAr world and the resimulated 
+// file was simulated in the ND hall. Wherever the original file has a muon, 
+// switch to the resimulated file.
 /////////////////////////////////////////////////////////////////////////////////
 
 #include "CAF.C"
@@ -178,21 +183,16 @@ void decayPi0( TLorentzVector pi0, TVector3 &gamma1, TVector3 &gamma2 )
 }
 
 // main loop function
-void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl_filename )
+void loop( CAF &caf, params &par, TTree * tree, TTree * tree-resim, TTree * gtree, std::string fhicl_filename )
 {
   // read in dumpTree output file
-  int ievt, lepPdg, muonReco, nFS;
-  float lepKE, muGArLen, muECalLen, hadTot, hadCollar;
+  int ievt, nFS;
+  float hadTot, hadCollar;
   float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
-  float p3lep[3], vtx[3], muonExitPt[3], muonExitMom[3];
+  float vtx[3]  
   int fsPdg[100];
   float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsTrkLen[100], fsTrkLenPerp[100];
   tree->SetBranchAddress( "ievt", &ievt );
-  tree->SetBranchAddress( "lepPdg", &lepPdg );
-  tree->SetBranchAddress( "muonReco", &muonReco );
-  tree->SetBranchAddress( "lepKE", &lepKE );
-  tree->SetBranchAddress( "muGArLen", &muGArLen );
-  tree->SetBranchAddress( "muECalLen", &muECalLen );
   tree->SetBranchAddress( "hadTot", &hadTot );
   tree->SetBranchAddress( "hadCollar", &hadCollar );
   tree->SetBranchAddress( "hadP", &hadP );
@@ -201,12 +201,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "hadPim", &hadPim );
   tree->SetBranchAddress( "hadPi0", &hadPi0 );
   tree->SetBranchAddress( "hadOther", &hadOther );
-  tree->SetBranchAddress( "p3lep", p3lep );
   tree->SetBranchAddress( "vtx", vtx );
-  tree->SetBranchAddress( "muonExitPt", muonExitPt );
-  tree->SetBranchAddress( "muonExitMom", muonExitMom );
-  tree->SetBranchAddress( "lepDeath", &caf.muon_endpoint );
-  tree->SetBranchAddress( "muon_endVolName", &caf.muon_endVolName );
   tree->SetBranchAddress( "nFS", &nFS );
   tree->SetBranchAddress( "fsPdg", fsPdg );
   tree->SetBranchAddress( "fsPx", fsPx );
@@ -215,6 +210,31 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "fsE", fsE );
   tree->SetBranchAddress( "fsTrkLen", fsTrkLen );
   tree->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp );
+
+  // read in resimulated dumpTree output file
+  int ievt_rs, lepPdg_rs, muonReco_rs;
+  float lepKE_rs, muGArLen_rs, muECalLen_rs;
+  float p3lep_rs[3], muonExitPt_rs[3], muonExitMom_rs[3];
+  int fsPdg_rs[100];
+  float fsPx_rs[100], fsPy_rs[100], fsPz_rs[100], fsE_rs[100], fsTrkLen_rs[100], fsTrkLenPerp_rs[100];
+  tree_resim->SetBranchAddress( "ievt", &ievt_rs );
+  tree_resim->SetBranchAddress( "lepPdg", &lepPdg_rs );
+  tree_resim->SetBranchAddress( "muonReco", &muonReco_rs );
+  tree_resim->SetBranchAddress( "lepKE", &lepKE_rs );
+  tree_resim->SetBranchAddress( "muGArLen", &muGArLen_rs );
+  tree_resim->SetBranchAddress( "muECalLen", &muECalLen_rs );
+  tree_resim->SetBranchAddress( "p3lep", p3lep_rs );
+  tree_resim->SetBranchAddress( "muonExitPt", muonExitPt_rs );
+  tree_resim->SetBranchAddress( "muonExitMom", muonExitMom_rs );
+  tree_resim->SetBranchAddress( "lepDeath", &caf.muon_endpoint );
+  tree_resim->SetBranchAddress( "muon_endVolName", &caf.muon_endVolName );
+  tree_resim->SetBranchAddress( "fsPx", fsPx_rs );
+  tree_resim->SetBranchAddress( "fsPy", fsPy_rs );
+  tree_resim->SetBranchAddress( "fsPz", fsPz_rs );
+  tree_resim->SetBranchAddress( "fsE", fsE_rs );
+  tree_resim->SetBranchAddress( "fsTrkLen", fsTrkLen_rs );
+  tree_resim->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp_rs );
+
 
   tree->SetBranchAddress( "geoEffThrowResults", &caf.geoEffThrowResults );
 
@@ -285,7 +305,11 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
     caf.eOther = 0.;
     for( int i = 0; i < nFS; ++i ) {
       double ke = 0.001*(fsE[i] - sqrt(fsE[i]*fsE[i] - fsPx[i]*fsPx[i] - fsPy[i]*fsPy[i] - fsPz[i]*fsPz[i]));
-      if( fsPdg[i] == caf.LepPDG ) {
+      if( fsPdg[i] == caf.LepPDG && abs(fsPdg[i] == 13)) {
+        lepP4.SetPxPyPzE( fsPx_rs[i]*0.001, fsPy_rs[i]*0.001, fsPz_rs[i]*0.001, fsE_rs[i]*0.001 );
+        caf.LepE = fsE_rs[i]*0.001;
+      }
+	  else if( fsPdg[i] == caf.LepPDG && abs(fsPdg[i] != 13)) {
         lepP4.SetPxPyPzE( fsPx[i]*0.001, fsPy[i]*0.001, fsPz[i]*0.001, fsE[i]*0.001 );
         caf.LepE = fsE[i]*0.001;
       }
@@ -339,11 +363,18 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         double p = sqrt(fsPx[i]*fsPx[i] + fsPy[i]*fsPy[i] + fsPz[i]*fsPz[i]);
         double KE = fsE[i] - sqrt(fsE[i]*fsE[i] - p*p);
 
-        if( (abs(pdg) == 13 || abs(pdg) == 211) && fsTrkLen[i] > longest_mip ) {
-          longest_mip = fsTrkLen[i];
+        if(abs(pdg) == 13 && fsTrkLen_rs[i] > longest_mip) {
+          longest_mip = fsTrkLen_rs[i];
           longest_mip_KE = KE;
           caf.reco_lepton_pdg = pdg;
-          if( pdg == 13 || pdg == -211 ) longest_mip_charge = -1;
+          if( pdg == 13 ) longest_mip_charge = -1;
+          else longest_mip_charge = 1;
+        }
+		else if(abs(pdg) == 211 && fsTrkLen[i] > longest_mip) {
+		  longest_mip = fsTrkLen[i];
+          longest_mip_KE = KE;
+          caf.reco_lepton_pdg = pdg;
+          if( pdg == -211 ) longest_mip_charge = -1;
           else longest_mip_charge = 1;
         }
 
@@ -367,9 +398,9 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         electrons++;
         reco_electron_pdg = lepPdg;
       } else if( abs(lepPdg) == 13 ) { // true nu_mu
-        if     ( muGArLen > 50. ) recoMuonTracker( caf, par ); // gas TPC match
-        else if( muonReco == 1 ) recoMuonLAr( caf, par ); // LAr-contained muon, this might get updated to NC...
-        else if( muonReco == 3 && muECalLen > 5. ) recoMuonECAL( caf, par ); // ECAL-stopper
+        if     ( muGArLen_rs > 50. ) recoMuonTracker( caf, par ); // gas TPC match
+        else if( muonReco_rs == 1 ) recoMuonLAr( caf, par ); // LAr-contained muon, this might get updated to NC...
+        else if( muonReco_rs == 3 && muECalLen_rs > 5. ) recoMuonECAL( caf, par ); // ECAL-stopper
         else { // exiting but poorly-reconstructed muon
           caf.Elep_reco = longest_mip * 0.0022;
           caf.reco_q = 0;
@@ -392,13 +423,13 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
       }
 
       // CC/NC confusion
-      if( electrons == 1 && muonReco <= 1 ) { // NC or numuCC reco as nueCC
+      if( electrons == 1 && muonReco_rs <= 1 ) { // NC or numuCC reco as nueCC
         caf.Elep_reco = electron_energy*0.001;
         caf.reco_q = 0;
         caf.reco_numu = 0; caf.reco_nue = 1; caf.reco_nc = 0;
         caf.muon_contained = 0; caf.muon_tracker = 0; caf.muon_ecal = 0; caf.muon_exit = 0;
         caf.reco_lepton_pdg = reco_electron_pdg;
-      } else if( muonReco <= 1 && !(abs(lepPdg) == 11 && caf.Elep_reco > 0.) && (longest_mip < par.CC_trk_length || longest_mip_KE/longest_mip > 3.) ) {
+      } else if( muonReco_rs <= 1 && !(abs(lepPdg) == 11 && caf.Elep_reco > 0.) && (longest_mip < par.CC_trk_length || longest_mip_KE/longest_mip > 3.) ) {
         // reco as NC
         caf.Elep_reco = 0.;
         caf.reco_q = 0;
@@ -440,10 +471,16 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         double mass = 0.001*sqrt(fsE[i]*fsE[i] - fsPx[i]*fsPx[i] - fsPy[i]*fsPy[i] - fsPz[i]*fsPz[i]);
         caf.pdg[i] = fsPdg[i];
         caf.ptrue[i] = ptrue;
-        caf.trkLen[i] = fsTrkLen[i];
-        caf.trkLenPerp[i] = fsTrkLenPerp[i];
+		if(abs(fsPdg[i]) == 13) {
+			caf.trkLen[i] = fsTrkLen_rs[i];
+        	caf.trkLenPerp[i] = fsTrkLenPerp_rs[i];
+		}
+        else {
+			caf.trkLen[i] = fsTrkLen[i];
+        	caf.trkLenPerp[i] = fsTrkLenPerp[i];
+		}
         // track length cut 6cm according to T Junk
-        if( fsTrkLen[i] > 0. && fsPdg[i] != 2112 ) { // basically select charged particles; somehow neutrons ocasionally get nonzero track length
+        if( fsTrkLen[i] > 0. && fsPdg[i] != 2112 && abs(fsPdg[i]) != 13) { // basically select charged particles; somehow neutrons ocasionally get nonzero track length
           double pT = 0.001*sqrt(fsPy[i]*fsPy[i] + fsPz[i]*fsPz[i]); // transverse to B field, in GeV
           double nHits = fsTrkLen[i] / par.gastpc_padPitch; // doesn't matter if not integer as only used in eq
           // Gluckstern formula, sigmapT/pT, with sigmaX and L in meters
@@ -481,7 +518,42 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
             caf.reco_numu = 1; caf.reco_nue = 0; caf.reco_nc = 0;
             caf.muon_tracker = 1;
           }
-        } else if( fsPdg[i] == 111 || fsPdg[i] == 22 ) {
+        } else if( fsTrkLen[i] > 0. && fsPdg[i] != 2112 && abs(fsPdg[i]) == 13) { // basically select charged particles; somehow neutrons ocasionally get nonzero track length
+          double pT = 0.001*sqrt(fsPy_rs[i]*fsPy_rs[i] + fsPz_rs[i]*fsPz_rs[i]); // transverse to B field, in GeV
+          double nHits = fsTrkLen_rs[i] / par.gastpc_padPitch; // doesn't matter if not integer as only used in eq
+          // Gluckstern formula, sigmapT/pT, with sigmaX and L in meters
+          double fracSig_meas = sqrt(720./(nHits+4)) * (0.01*par.gastpc_padPitch/sqrt(12.)) * pT / (0.3 * par.gastpc_B * 0.0001 * fsTrkLenPerp_rs[i]*fsTrkLenPerp_rs[i]);
+          // multiple scattering term
+          double fracSig_MCS = 0.052 / (par.gastpc_B * sqrt(par.gastpc_X0*fsTrkLenPerp_rs[i]*0.0001));
+
+          double sigmaP = ptrue * sqrt( fracSig_meas*fracSig_meas + fracSig_MCS*fracSig_MCS );
+          double preco = rando->Gaus( ptrue, sigmaP );
+          double ereco = sqrt( preco*preco + mass*mass ) - mass; // kinetic energy
+          caf.partEvReco[i] = ereco;
+
+          // threshold cut
+          if( fsTrkLen_rs[i] > par.gastpc_len ) {
+            caf.Ev_reco += ereco;
+          }
+
+          if( fsTrkLen[i] > 100. ) { // muon, don't really care about nu_e CC for now
+            caf.partEvReco[i] += mass;
+            caf.Elep_reco = sqrt(preco*preco + mass*mass);
+            // angle reconstruction
+            double true_tx = 1000.*atan(caf.LepMomX / caf.LepMomZ);
+            double true_ty = 1000.*atan(caf.LepMomY / caf.LepMomZ);
+            double evalTsmear = tsmear->Eval(caf.Elep_reco - mmu);
+            if( evalTsmear < 0. ) evalTsmear = 0.;
+            double reco_tx = true_tx + rando->Gaus(0., evalTsmear/sqrt(2.));
+            double reco_ty = true_ty + rando->Gaus(0., evalTsmear/sqrt(2.));
+            caf.theta_reco = 0.001*sqrt( reco_tx*reco_tx + reco_ty*reco_ty );
+            // assume perfect charge reconstruction
+            caf.reco_q = (fsPdg_rs[i] > 0 ? -1 : 1);
+            caf.reco_numu = 1; caf.reco_nue = 0; caf.reco_nc = 0;
+            caf.muon_tracker = 1;
+          }
+        }
+		else if( fsPdg[i] == 111 || fsPdg[i] == 22 ) {
           double ereco = 0.001 * rando->Gaus( fsE[i], 0.1*fsE[i] );
           caf.partEvReco[i] = ereco;
           caf.Ev_reco += ereco;
@@ -512,6 +584,7 @@ int main( int argc, char const *argv[] )
   // get command line options
   std::string gfile;
   std::string infile;
+  std::string infile_resim;
   std::string outfile;
   std::string fhicl_filename;
 
@@ -543,6 +616,9 @@ int main( int argc, char const *argv[] )
   while( i < argc ) {
     if( argv[i] == std::string("--infile") ) {
       infile = argv[i+1];
+      i += 2;
+    } else if( argv[i] == std::string("--infile_resim") ) {
+      infile_resim = argv[i+1];
       i += 2;
     } else if( argv[i] == std::string("--gfile") ) {
       gfile = argv[i+1];
@@ -578,10 +654,13 @@ int main( int argc, char const *argv[] )
   TFile * tf = new TFile( infile.c_str() );
   TTree * tree = (TTree*) tf->Get( "tree" );
 
+  TFile * tf_resim = new TFile( infile_resim.c_str() );
+  TTree * tree_resim = (TTree*) tf_resim-.Get( "tree" );
+
   TFile * gf = new TFile( gfile.c_str() );
   TTree * gtree = (TTree*) gf->Get( "gtree" );
 
-  loop( caf, par, tree, gtree, fhicl_filename );
+  loop( caf, par, tree, tree_resim, gtree, fhicl_filename );
 
   caf.version = 4;
   printf( "Run %d POT %g\n", caf.meta_run, caf.pot );
