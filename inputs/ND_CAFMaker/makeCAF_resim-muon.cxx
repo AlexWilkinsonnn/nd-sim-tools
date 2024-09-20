@@ -183,13 +183,13 @@ void decayPi0( TLorentzVector pi0, TVector3 &gamma1, TVector3 &gamma2 )
 }
 
 // main loop function
-void loop( CAF &caf, params &par, TTree * tree, TTree * tree-resim, TTree * gtree, std::string fhicl_filename )
+void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtree, std::string fhicl_filename )
 {
   // read in dumpTree output file
   int ievt, nFS;
   float hadTot, hadCollar;
   float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
-  float vtx[3]  
+  float vtx[3]; 
   int fsPdg[100];
   float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsTrkLen[100], fsTrkLenPerp[100];
   tree->SetBranchAddress( "ievt", &ievt );
@@ -393,11 +393,11 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree-resim, TTree * gtre
       }
 
       // True CC reconstruction
-      if( abs(lepPdg) == 11 ) { // true nu_e
+      if( abs(lepPdg_rs) == 11 ) { // true nu_e
         recoElectron( caf, par );
         electrons++;
-        reco_electron_pdg = lepPdg;
-      } else if( abs(lepPdg) == 13 ) { // true nu_mu
+        reco_electron_pdg = lepPdg_rs;
+      } else if( abs(lepPdg_rs) == 13 ) { // true nu_mu
         if     ( muGArLen_rs > 50. ) recoMuonTracker( caf, par ); // gas TPC match
         else if( muonReco_rs == 1 ) recoMuonLAr( caf, par ); // LAr-contained muon, this might get updated to NC...
         else if( muonReco_rs == 3 && muECalLen_rs > 5. ) recoMuonECAL( caf, par ); // ECAL-stopper
@@ -429,14 +429,14 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree-resim, TTree * gtre
         caf.reco_numu = 0; caf.reco_nue = 1; caf.reco_nc = 0;
         caf.muon_contained = 0; caf.muon_tracker = 0; caf.muon_ecal = 0; caf.muon_exit = 0;
         caf.reco_lepton_pdg = reco_electron_pdg;
-      } else if( muonReco_rs <= 1 && !(abs(lepPdg) == 11 && caf.Elep_reco > 0.) && (longest_mip < par.CC_trk_length || longest_mip_KE/longest_mip > 3.) ) {
+      } else if( muonReco_rs <= 1 && !(abs(lepPdg_rs) == 11 && caf.Elep_reco > 0.) && (longest_mip < par.CC_trk_length || longest_mip_KE/longest_mip > 3.) ) {
         // reco as NC
         caf.Elep_reco = 0.;
         caf.reco_q = 0;
         caf.reco_numu = 0; caf.reco_nue = 0; caf.reco_nc = 1;
         caf.muon_contained = 0; caf.muon_tracker = 0; caf.muon_ecal = 0; caf.muon_exit = 0;
         caf.reco_lepton_pdg = 0;
-      } else if( (abs(lepPdg) == 12 || abs(lepPdg) == 14) && longest_mip > par.CC_trk_length && longest_mip_KE/longest_mip < 3. ) { // true NC reco as CC numu
+      } else if( (abs(lepPdg_rs) == 12 || abs(lepPdg_rs) == 14) && longest_mip > par.CC_trk_length && longest_mip_KE/longest_mip < 3. ) { // true NC reco as CC numu
         caf.Elep_reco = longest_mip_KE*0.001 + mmu;
         if( par.fhc ) caf.reco_q = -1;
         else {
@@ -655,7 +655,7 @@ int main( int argc, char const *argv[] )
   TTree * tree = (TTree*) tf->Get( "tree" );
 
   TFile * tf_resim = new TFile( infile_resim.c_str() );
-  TTree * tree_resim = (TTree*) tf_resim-.Get( "tree" );
+  TTree * tree_resim = (TTree*) tf_resim->Get( "tree" );
 
   TFile * gf = new TFile( gfile.c_str() );
   TTree * gtree = (TTree*) gf->Get( "gtree" );
