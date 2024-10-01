@@ -15,12 +15,12 @@ CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/caf
 NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_root"
 PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
 
-SAVE_GENIE=true
-SAVE_GTRAC=true
-SAVE_EDEP=true # edep-sim output
-SAVE_EDEP_MAKECAF=true # summarised edep-sim for parameterised reco in mackeCAF
-SAVE_CAF=true # currently parameterised reco caf
-SAVE_NDFD_ROOT=true # nd and fd depo data after translation + rotation throws to select
+SAVE_GENIE=false
+SAVE_GTRAC=false
+SAVE_EDEP=false # edep-sim output
+SAVE_EDEP_MAKECAF=false # summarised edep-sim for parameterised reco in mackeCAF
+SAVE_CAF=false # currently parameterised reco caf
+SAVE_NDFD_ROOT=false # nd and fd depo data after translation + rotation throws to select
 SAVE_PAIR_H5=true # nd-fd paired data file
 
 # These dirs need to be in the job tarball
@@ -69,7 +69,8 @@ RNDSEED=`echo "$RNDSEED" | cut -f 1 -d '.'`
 NEVENTS="-e ${NPOT}"
 
 cp ${INPUTS_DIR}/* .
-ls
+echo "LS-ing inputs after initial copy."
+ls -rt
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
@@ -116,7 +117,8 @@ export GNUMIXML="GNuMIFlux.xml"
 # export GNUMIXML="GNuMIFlux.xml"
 # export GNUMIFLUXXML="${PWD}/GNuMIFlux.xml"
 # export GDK2NUFLUXXML="${PWD}/GNuMIFlux.xml"
-
+echo "LS-ing inputs pre-gevgen"
+ls -rt
 # Run GENIE
 echo "Running gevgen"
 gevgen_fnal \
@@ -134,7 +136,8 @@ gevgen_fnal \
     --event-generator-list Default+CCMEC
     #-m ${GEOMETRY}.${TOPVOL}.maxpl.xml \
 cp ${MODE}.${RNDSEED}.ghep.root input_file.ghep.root
-
+echo "LS-ing inputs post-gevgen, pre gntpc"
+ls -rt
 # Convert the genie output to rootracker
 echo "Running gntpc"
 gntpc -i input_file.ghep.root -f rootracker \
@@ -150,14 +153,16 @@ NPER=$(echo "std::cout << gtree->GetEntries() << std::endl;" | \
 echo "NPER=${NPER}"
 
 setup edepsim v3_0_0 -q e19:prof
-
+echo "LS-ing inputs post gntpc, pre edep-sim on LAr world"
+ls -rt
 echo "Running edepsim"
 edep-sim -C \
          -g ${GEOMETRY_LARBATH} \
          -o edep_larbath.${RNDSEED}.root \
          -e ${NPER} \
          $EDEP_MAC
-
+echo "LS-ing inputs post edep-sim on LAr world, pre edep-sim on ND"
+ls -rt
 # The ND hall is not best-represented by an infinite LAr bath, so the 
 # simulation is improved by re-simulating just the muon in the ND hall. We 
 # run edep-sim just on the muon in the ND hall so that the hadronic energy 
@@ -171,24 +176,27 @@ edep-sim -C \
 # Want to rollback environment to use old ND_CAFMaker scripts
 # Unset all new env vars and then source the old env - probably overkill but it works
 echo "Resetting env with env.sh"
-unset $(comm -2 -3 <(\
-        printenv | sed 's/=.*//' | sort) <(\
-        sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
+unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
 source env.sh
 
 source ${ND_CAFMAKER_DIR}/ndcaf_setup.sh
 export GXMLPATH=${PWD}:${GXMLPATH}
 export GNUMIXML="GNuMIFlux.xml"
-
+echo "LS-ing inputs post edep-sim on ND, pre dumpTree on LAr"
+ls -rt
 echo "Running makeCAF dumpTree"
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_larbath.${RNDSEED}.root \
                                         --edepsim_geometry ${GEOMETRY_ND_DUMMY_EDEP} \
-                                        --outfile edep_dump_larbath_nd.${RNDSEED}.root \
+                                        --outfile edep_dump_larbath_nd.${RNDSEED}.root
+
+echo "LS-ing inputs post dumpTree on LAr, pre dumpTree on ND"
+ls -rt
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root \
-                                        --edepsim_geometry ${GEOMETRY_ND} \
-                                        --outfile edep_dump_ND_nd.${RNDSEED}.root \
+                                        --edepsim_geometry ${GEOMETRY_ND_DUMMY_EDEP} \
+                                        --outfile edep_dump_ND_nd.${RNDSEED}.root
 
-
+echo "LS-ing inputs post dumpTree on ND, pre makeCAF"
+ls -rt
 echo "Running makeCAF"
 cd $ND_CAFMAKER_DIR
 ./makeCAF_resim-muon --infile ../edep_dump_larbath_nd.${RNDSEED}.root \
@@ -200,12 +208,11 @@ cd $ND_CAFMAKER_DIR
           			 ${RHC} \
           			 --oa ${OFFAXIS}
 cd ..
-
+echo "LS-ing inputs after makeCAF"
+ls -rt
 # Reset env again for GeoEff rotations+translation
 echo "Resetting env with env.sh"
-unset $(comm -2 -3 <(\
-        printenv | sed 's/=.*//' | sort) <(\
-        sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
+unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
 source env.sh
 
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
@@ -241,7 +248,9 @@ python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
 cd ../../
 
 echo "Running nd-fd pair maker"
+echo "LS-ing inputs post throws"
 ls -lrth
+echo "LS-ing n2fd_outputs/* post thtows"
 ls -lrth n2fd_outputs/*
 python dumpTree_larndsimv0_3_4_transrots-paramreco.py --param_reco_file ${HORN}.${RNDSEED}.nd.CAF.root \
                                                       n2fd_outputs/root_out/n2fd_paired_out.root \

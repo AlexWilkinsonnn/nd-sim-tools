@@ -1,10 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////////
-// makeCAF_resim-muon without nusystematics and with an eventID tree
-// Identical to makeCAF, but takes in a second input file that has the same 
-// events except simulated in a different environment. The primary use case 
-// is if the original file was simulated in LAr world and the resimulated 
-// file was simulated in the ND hall. Wherever the original file has a muon, 
-// switch to the resimulated file.
+// makeCAF without nusystematics and with an eventID tree
 /////////////////////////////////////////////////////////////////////////////////
 
 #include "CAF.C"
@@ -183,13 +178,13 @@ void decayPi0( TLorentzVector pi0, TVector3 &gamma1, TVector3 &gamma2 )
 }
 
 // main loop function
-void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtree, std::string fhicl_filename )
+void loop( CAF &caf, params &par, TTree * tree, TTree* tree_resim, TTree * gtree, std::string fhicl_filename )
 {
   // read in dumpTree output file
   int ievt, nFS;
   float hadTot, hadCollar;
   float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
-  float vtx[3]; 
+  float vtx[3];
   int fsPdg[100];
   float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsTrkLen[100], fsTrkLenPerp[100];
   tree->SetBranchAddress( "ievt", &ievt );
@@ -212,20 +207,13 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
   tree->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp );
 
   // read in resimulated dumpTree output file
-  int ievt_rs, lepPdg_rs, muonReco_rs;
-  float lepKE_rs, muGArLen_rs, muECalLen_rs;
-  float p3lep_rs[3], muonExitPt_rs[3], muonExitMom_rs[3];
-  int fsPdg_rs[100];
+  int lepPdg_rs, muonReco_rs;
+  float muGArLen_rs, muECalLen_rs;
   float fsPx_rs[100], fsPy_rs[100], fsPz_rs[100], fsE_rs[100], fsTrkLen_rs[100], fsTrkLenPerp_rs[100];
-  tree_resim->SetBranchAddress( "ievt", &ievt_rs );
   tree_resim->SetBranchAddress( "lepPdg", &lepPdg_rs );
   tree_resim->SetBranchAddress( "muonReco", &muonReco_rs );
-  tree_resim->SetBranchAddress( "lepKE", &lepKE_rs );
   tree_resim->SetBranchAddress( "muGArLen", &muGArLen_rs );
   tree_resim->SetBranchAddress( "muECalLen", &muECalLen_rs );
-  tree_resim->SetBranchAddress( "p3lep", p3lep_rs );
-  tree_resim->SetBranchAddress( "muonExitPt", muonExitPt_rs );
-  tree_resim->SetBranchAddress( "muonExitMom", muonExitMom_rs );
   tree_resim->SetBranchAddress( "lepDeath", &caf.muon_endpoint );
   tree_resim->SetBranchAddress( "muon_endVolName", &caf.muon_endVolName );
   tree_resim->SetBranchAddress( "fsPx", fsPx_rs );
@@ -234,7 +222,6 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
   tree_resim->SetBranchAddress( "fsE", fsE_rs );
   tree_resim->SetBranchAddress( "fsTrkLen", fsTrkLen_rs );
   tree_resim->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp_rs );
-
 
   tree->SetBranchAddress( "geoEffThrowResults", &caf.geoEffThrowResults );
 
@@ -246,14 +233,15 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
   for( int ii = par.first; ii < N; ++ii ) {
 
     tree->GetEntry(ii);
+	tree_resim->GetEntry(ii);
     if( ii % 100 == 0 ) printf( "Event %d of %d...\n", ii, N );
 
     caf.setToBS();
 
-    caf.vtx_x = vtx[0];
-    caf.vtx_y = vtx[1];
-    caf.vtx_z = vtx[2];
-    caf.det_x = -100.*par.OA_xcoord;
+    caf.vtx_x = static_cast<double>(vtx[0]);
+    caf.vtx_y = static_cast<double>(vtx[1]);
+    caf.vtx_z = static_cast<double>(vtx[2]);
+    caf.det_x = static_cast<double>(-100.*par.OA_xcoord);
 
     // configuration variables in CAF file; we don't use mvaresult so just set it to zero
     caf.run = par.run;
@@ -305,13 +293,11 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
     caf.eOther = 0.;
     for( int i = 0; i < nFS; ++i ) {
       double ke = 0.001*(fsE[i] - sqrt(fsE[i]*fsE[i] - fsPx[i]*fsPx[i] - fsPy[i]*fsPy[i] - fsPz[i]*fsPz[i]));
-      if( fsPdg[i] == caf.LepPDG && abs(fsPdg[i] == 13)) {
+      if( fsPdg[i] == caf.LepPDG && abs(fsPdg[i] == 13)) {	
         lepP4.SetPxPyPzE( fsPx_rs[i]*0.001, fsPy_rs[i]*0.001, fsPz_rs[i]*0.001, fsE_rs[i]*0.001 );
-        caf.LepE = fsE_rs[i]*0.001;
       }
 	  else if( fsPdg[i] == caf.LepPDG && abs(fsPdg[i] != 13)) {
         lepP4.SetPxPyPzE( fsPx[i]*0.001, fsPy[i]*0.001, fsPz[i]*0.001, fsE[i]*0.001 );
-        caf.LepE = fsE[i]*0.001;
       }
       else if( fsPdg[i] == 2212 ) {caf.nP++; caf.eP += ke;}
       else if( fsPdg[i] == 2112 ) {caf.nN++; caf.eN += ke;}
@@ -330,20 +316,20 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
     TLorentzVector q = nuP4-lepP4;
 
     // Q2, W, x, y frequently do not get filled in GENIE Kinematics object, so calculate manually
-    caf.Q2 = -q.Mag2();
-    caf.W = sqrt(0.939*0.939 + 2.*q.E()*0.939 + q.Mag2()); // "Wexp"
-    caf.X = -q.Mag2()/(2*0.939*q.E());
-    caf.Y = q.E()/caf.Ev;
+    caf.Q2 = static_cast<double>(-q.Mag2());
+    caf.W = static_cast<double>(sqrt(0.939*0.939 + 2.*q.E()*0.939 + q.Mag2())); // "Wexp"
+    caf.X = static_cast<double>(-q.Mag2()/(2*0.939*q.E()));
+    caf.Y = static_cast<double>(q.E()/caf.Ev);
 
     caf.theta_reco = -1.; // default value
 
     caf.NuMomX = nuP4.X();
     caf.NuMomY = nuP4.Y();
     caf.NuMomZ = nuP4.Z();
-    caf.LepMomX = lepP4.X();
-    caf.LepMomY = lepP4.Y();
-    caf.LepMomZ = lepP4.Z();
-    caf.LepE = lepP4.E();
+    caf.LepMomX = static_cast<double>(lepP4.X());
+    caf.LepMomY = static_cast<double>(lepP4.Y());
+    caf.LepMomZ = static_cast<double>(lepP4.Z());
+    caf.LepE = static_cast<double>(lepP4.E());
     caf.LepNuAngle = nuP4.Angle( lepP4.Vect() );
 
     //--------------------------------------------------------------------------
@@ -393,7 +379,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
       }
 
       // True CC reconstruction
-      if( abs(lepPdg_rs) == 11 ) { // true nu_e
+            if( abs(lepPdg_rs) == 11 ) { // true nu_e
         recoElectron( caf, par );
         electrons++;
         reco_electron_pdg = lepPdg_rs;
@@ -471,7 +457,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
         double mass = 0.001*sqrt(fsE[i]*fsE[i] - fsPx[i]*fsPx[i] - fsPy[i]*fsPy[i] - fsPz[i]*fsPz[i]);
         caf.pdg[i] = fsPdg[i];
         caf.ptrue[i] = ptrue;
-		if(abs(fsPdg[i]) == 13) {
+        if(abs(fsPdg[i]) == 13) {
 			caf.trkLen[i] = fsTrkLen_rs[i];
         	caf.trkLenPerp[i] = fsTrkLenPerp_rs[i];
 		}
@@ -480,7 +466,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
         	caf.trkLenPerp[i] = fsTrkLenPerp[i];
 		}
         // track length cut 6cm according to T Junk
-        if( fsTrkLen[i] > 0. && fsPdg[i] != 2112 && abs(fsPdg[i]) != 13) { // basically select charged particles; somehow neutrons ocasionally get nonzero track length
+        if( fsTrkLen[i] > 0. && fsPdg[i] != 2112) { // basically select charged particles; somehow neutrons ocasionally get nonzero track length
           double pT = 0.001*sqrt(fsPy[i]*fsPy[i] + fsPz[i]*fsPz[i]); // transverse to B field, in GeV
           double nHits = fsTrkLen[i] / par.gastpc_padPitch; // doesn't matter if not integer as only used in eq
           // Gluckstern formula, sigmapT/pT, with sigmaX and L in meters
@@ -518,42 +504,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * tree_resim, TTree * gtre
             caf.reco_numu = 1; caf.reco_nue = 0; caf.reco_nc = 0;
             caf.muon_tracker = 1;
           }
-        } else if( fsTrkLen[i] > 0. && fsPdg[i] != 2112 && abs(fsPdg[i]) == 13) { // basically select charged particles; somehow neutrons ocasionally get nonzero track length
-          double pT = 0.001*sqrt(fsPy_rs[i]*fsPy_rs[i] + fsPz_rs[i]*fsPz_rs[i]); // transverse to B field, in GeV
-          double nHits = fsTrkLen_rs[i] / par.gastpc_padPitch; // doesn't matter if not integer as only used in eq
-          // Gluckstern formula, sigmapT/pT, with sigmaX and L in meters
-          double fracSig_meas = sqrt(720./(nHits+4)) * (0.01*par.gastpc_padPitch/sqrt(12.)) * pT / (0.3 * par.gastpc_B * 0.0001 * fsTrkLenPerp_rs[i]*fsTrkLenPerp_rs[i]);
-          // multiple scattering term
-          double fracSig_MCS = 0.052 / (par.gastpc_B * sqrt(par.gastpc_X0*fsTrkLenPerp_rs[i]*0.0001));
-
-          double sigmaP = ptrue * sqrt( fracSig_meas*fracSig_meas + fracSig_MCS*fracSig_MCS );
-          double preco = rando->Gaus( ptrue, sigmaP );
-          double ereco = sqrt( preco*preco + mass*mass ) - mass; // kinetic energy
-          caf.partEvReco[i] = ereco;
-
-          // threshold cut
-          if( fsTrkLen_rs[i] > par.gastpc_len ) {
-            caf.Ev_reco += ereco;
-          }
-
-          if( fsTrkLen[i] > 100. ) { // muon, don't really care about nu_e CC for now
-            caf.partEvReco[i] += mass;
-            caf.Elep_reco = sqrt(preco*preco + mass*mass);
-            // angle reconstruction
-            double true_tx = 1000.*atan(caf.LepMomX / caf.LepMomZ);
-            double true_ty = 1000.*atan(caf.LepMomY / caf.LepMomZ);
-            double evalTsmear = tsmear->Eval(caf.Elep_reco - mmu);
-            if( evalTsmear < 0. ) evalTsmear = 0.;
-            double reco_tx = true_tx + rando->Gaus(0., evalTsmear/sqrt(2.));
-            double reco_ty = true_ty + rando->Gaus(0., evalTsmear/sqrt(2.));
-            caf.theta_reco = 0.001*sqrt( reco_tx*reco_tx + reco_ty*reco_ty );
-            // assume perfect charge reconstruction
-            caf.reco_q = (fsPdg_rs[i] > 0 ? -1 : 1);
-            caf.reco_numu = 1; caf.reco_nue = 0; caf.reco_nc = 0;
-            caf.muon_tracker = 1;
-          }
-        }
-		else if( fsPdg[i] == 111 || fsPdg[i] == 22 ) {
+        } else if( fsPdg[i] == 111 || fsPdg[i] == 22 ) {
           double ereco = 0.001 * rando->Gaus( fsE[i], 0.1*fsE[i] );
           caf.partEvReco[i] = ereco;
           caf.Ev_reco += ereco;
@@ -590,7 +541,7 @@ int main( int argc, char const *argv[] )
 
   // Make parameter object and set defaults
   params par;
-  par.IsGasTPC = true;
+  par.IsGasTPC = false;
   par.OA_xcoord = 0.; // on-axis by default
   par.fhc = true;
   par.grid = false;
@@ -641,6 +592,7 @@ int main( int argc, char const *argv[] )
       i += 1;
     } else if( argv[i] == std::string("--gastpc") ) {
       par.IsGasTPC = true;
+	  std::cout << "Warning: CAF Maker not configured to resimulate muon in a gas-only TPC. " << std::endl;
       i += 1;
     } else i += 1; // look for next thing
   }

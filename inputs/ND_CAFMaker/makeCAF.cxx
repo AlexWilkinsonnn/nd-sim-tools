@@ -517,7 +517,7 @@ int main( int argc, char const *argv[] )
 
   // Make parameter object and set defaults
   params par;
-  par.IsGasTPC = true;
+  par.IsGasTPC = false;
   par.OA_xcoord = 0.; // on-axis by default
   par.fhc = true;
   par.grid = false;
