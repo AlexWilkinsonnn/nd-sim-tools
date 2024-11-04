@@ -250,6 +250,15 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
 
     caf.setToBS();
 
+    // set defaults
+    for( int j = 0; j < 100; ++j ) {
+      caf.nwgt[j] = 7;
+      caf.cvwgt[j] = ( caf.iswgt[j] ? 1. : 0. );
+      for( unsigned int k = 0; k < 100; ++k ) {
+        caf.wgt[j][k] = ( caf.iswgt[j] ? 1. : 0. );
+      }
+    }
+
     caf.vtx_x = vtx[0];
     caf.vtx_y = vtx[1];
     caf.vtx_z = vtx[2];
@@ -346,6 +355,17 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
     caf.vtxInGap = vtxInGap;
     caf.hadEFracInGap = hadEFracInGap;
     caf.lepEFracInGap = lepEFracInGap;
+
+    // Add DUNErw weights to the CAF
+
+    systtools::event_unit_response_w_cv_t resp = rh.GetEventVariationAndCVResponse(*event);
+    for( systtools::event_unit_response_w_cv_t::iterator it = resp.begin(); it != resp.end(); ++it ) {
+      caf.nwgt[(*it).pid] = (*it).responses.size();
+      caf.cvwgt[(*it).pid] = (*it).CV_response;
+      for( unsigned int i = 0; i < (*it).responses.size(); ++i ) {
+        caf.wgt[(*it).pid][i] = (*it).responses[i];
+      }
+    }
 
     //--------------------------------------------------------------------------
     // Parameterized reconstruction
@@ -594,17 +614,32 @@ int main( int argc, char const *argv[] )
     } else i += 1; // look for next thing
   }
 
-  rando = new TRandom3( par.seed );
-  CAF caf( outfile, par.IsGasTPC );
-
-  // LAr driven smearing, maybe we want to change for gas?
-  tsmear = new TF1( "tsmear", "0.162 + 3.407*pow(x,-1.) + 3.129*pow(x,-0.5)", 0., 999.9 );
-
   TFile * tf = new TFile( infile.c_str() );
   TTree * tree = (TTree*) tf->Get( "tree" );
 
   TFile * gf = new TFile( gfile.c_str() );
   TTree * gtree = (TTree*) gf->Get( "gtree" );
+
+  rando = new TRandom3( par.seed );
+  CAF caf( outfile, par.IsGasTPC );
+
+  // Store edep-sim event IDS also because I am scared
+  TTree *tEventId = new TTree("eventid", "eventid");
+  int evidOut;
+  tEventId->Branch("eventID", &evidOut, "eventId/I");
+  int evidIn;
+  tree->SetBranchAddress("eventID", &evidIn);
+  int N = tree->GetEntries();
+  for(int ii = 0; ii < N; ++ii) {
+    tree->GetEntry(ii);
+    evidOut = evidIn;
+    tEventId->Fill();
+  }
+  tEventId->Write();
+  std::cout << "here\n";
+
+  // LAr driven smearing, maybe we want to change for gas?
+  tsmear = new TF1( "tsmear", "0.162 + 3.407*pow(x,-1.) + 3.129*pow(x,-0.5)", 0., 999.9 );
 
   loop( caf, par, tree, gtree, fhicl_filename );
 
@@ -620,18 +655,4 @@ int main( int argc, char const *argv[] )
 
   std::cout << "Writing CAF" << std::endl;
   caf.write();
-
-  // Store edep-sim event IDS also because I am scared
-  TTree *tEventId = new TTree("eventid", "eventid");
-  int evidOut;
-  tEventId->Branch("eventID", &evidOut, "eventId/I");
-  int evidIn;
-  tree->SetBranchAddress("eventID", &evidIn);
-  int N = tree->GetEntries();
-  for(int ii = 0; ii < N; ++ii) {
-    tree->GetEntry(ii);
-    evidOut = evidIn;
-    tEventId->Fill();
-  }
-  tEventId->Write();
 }
