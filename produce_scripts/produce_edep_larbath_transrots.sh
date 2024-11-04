@@ -25,6 +25,7 @@ TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
 EDEPSIM_ANA_CFG="UserConfig_10000throws.py"
 
+
 MODE="neutrino"
 HORN="FHC"
 RHC=""
