@@ -163,7 +163,9 @@ unset $(comm -2 -3 <(\
         sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
 source env.sh
 
-source ${ND_CAFMAKER_DIR}/ndcaf_setup.sh
+cd $ND_CAFMAKER_DIR
+source ndcaf_setup.sh
+cd ../
 export GXMLPATH=${PWD}:${GXMLPATH}
 export GNUMIXML="GNuMIFlux.xml"
 
