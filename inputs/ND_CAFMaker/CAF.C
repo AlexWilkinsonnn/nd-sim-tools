@@ -105,6 +105,10 @@ CAF::CAF( std::string filename, bool isGas )
 
   cafMVA->Branch("geoEffThrowResults", &geoEffThrowResults);
 
+  cafMVA->Branch("vtxInGap", &vtxInGap, "vtxInGap/I");
+  cafMVA->Branch("hadEFracInGap", &hadEFracInGap, "hadEFracInGap/D");
+  cafMVA->Branch("lepEFracInGap", &lepEFracInGap, "lepEFracInGap/D");
+
   genie->Branch( "genie_record", &mcrec );
 
   cafPOT->Branch( "pot", &pot, "pot/D" );
@@ -175,6 +179,8 @@ void CAF::setToBS()
   gastpc_pi_pl_mult = 0;
   gastpc_pi_min_mult = 0;
   nFSP = 0;
+
+  vtxInGap = -1; hadEFracInGap = -1.; lepEFracInGap = -1.;
 
   // nwgt and iswgt do not change event by event and are set outside the event loop
   // do not reset them to BS here

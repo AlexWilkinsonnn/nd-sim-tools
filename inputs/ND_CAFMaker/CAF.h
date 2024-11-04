@@ -63,6 +63,11 @@ public:
   // Event-by-event geometric efficiency throw results
   std::vector< std::vector < std::vector < uint64_t > > > * geoEffThrowResults;
 
+  // Infill info
+  int vtxInGap;
+  double hadEFracInGap;
+  double lepEFracInGap;
+
   // meta
   double pot;
   int meta_run, meta_subrun;
