@@ -9,11 +9,11 @@
 ################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/genie"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/edep"
-CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/caf"
-NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_root"
-PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/caf"
+NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/pair_root"
+PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/pair_allinfo_h5"
 
 SAVE_GENIE=false
 SAVE_GTRAC=false
@@ -35,9 +35,9 @@ TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
 EDEPSIM_ANA_CFG="UserConfig_tdr_nofdthrows.py"
 
-MODE="neutrino"
-HORN="FHC"
-RHC=""
+MODE="antineutrino" # "neutrino" or "antineutrino" (controls horn current)
+HORN="RHC" # "FHC" or "RHC" (controls naming of files)
+RHC="--rhc" # "" or "--rhc" (controls ND parametrized reconstruction algorithm)
 FLUX="dk2nu"
 FLUXOPT="--dk2nu"
 # FLUX="gsimple"
@@ -115,8 +115,8 @@ export GNUMIXML="GNuMIFlux.xml"
 # this script could inherit anything important from my env but idk im dumb)
 # export GXMLPATH=${PWD}:${GXMLPATH}
 # export GNUMIXML="GNuMIFlux.xml"
-# export GNUMIFLUXXML="${PWD}/GNuMIFlux.xml"
-# export GDK2NUFLUXXML="${PWD}/GNuMIFlux.xml"
+export GNUMIFLUXXML="${PWD}/GNuMIFlux.xml"
+export GDK2NUFLUXXML="${PWD}/GNuMIFlux.xml"
 echo "LS-ing inputs pre-gevgen"
 ls -rt
 # Run GENIE
@@ -182,6 +182,8 @@ source env.sh
 source ${ND_CAFMAKER_DIR}/ndcaf_setup.sh
 export GXMLPATH=${PWD}:${GXMLPATH}
 export GNUMIXML="GNuMIFlux.xml"
+export GNUMIFLUXXML="${PWD}/GNuMIFlux.xml"
+export GDK2NUFLUXXML="${PWD}/GNuMIFlux.xml"
 echo "LS-ing inputs post edep-sim on ND, pre dumpTree on LAr"
 ls -rt
 echo "Running makeCAF dumpTree"
@@ -244,6 +246,7 @@ mkdir n2fd_outputs
 cd ${TRANSROTS_DIR}/app
 python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
                       --out_dir ../../n2fd_outputs \
+					  --caf_file ../../${HORN}.${RNDSEED}.nd.CAF.root \
                       ../../edep_larbath.${RNDSEED}.root # 1> /dev/null 2/ /dev/null
 cd ../../
 

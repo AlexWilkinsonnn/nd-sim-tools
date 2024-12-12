@@ -511,14 +511,14 @@ void loop( CAF &caf, params &par, TTree * tree, TTree* tree_resim, TTree * gtree
         }
       }
     }
-
-    caf.fill();
+	if((caf.vtx_x < 310.) && (caf.vtx_x > -310.) && (caf.vtx_y < 550.) && (caf.vtx_y > -550.) && (caf.vtx_z < 124.4) && (caf.vtx_z > 50.) && ((caf.muon_tracker == 1) || (caf.muon_contained == 1)) && (caf.reco_numu == 1) && (((caf.reco_q == -1) && (caf.neutrinoPDG > 0)) || ((caf.reco_q == 1) && (caf.neutrinoPDG < 0))) && (caf.Ehad_veto < 30.)) {
+        caf.fill();
+	}
   }
 
   // set POT
   caf.meta_run = par.run;
   caf.meta_subrun = par.subrun;
-
 }
 
 int main( int argc, char const *argv[] )
@@ -628,7 +628,7 @@ int main( int argc, char const *argv[] )
   caf.write();
 
   // Store edep-sim event IDS also because I am scared
-  TTree *tEventId = new TTree("eventid", "eventid");
+/*  TTree *tEventId = new TTree("eventid", "eventid");
   int evidOut;
   tEventId->Branch("eventID", &evidOut, "eventId/I");
   int evidIn;
@@ -636,8 +636,8 @@ int main( int argc, char const *argv[] )
   int N = tree->GetEntries();
   for(int ii = 0; ii < N; ++ii) {
     tree->GetEntry(ii);
-    evidOut = evidIn;
+    evidOut = evidIn;	
     tEventId->Fill();
   }
-  tEventId->Write();
+  tEventId->Write();*/
 }
