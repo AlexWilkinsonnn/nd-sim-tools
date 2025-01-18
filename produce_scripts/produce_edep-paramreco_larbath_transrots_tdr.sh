@@ -156,11 +156,30 @@ setup edepsim v3_0_0 -q e19:prof
 echo "LS-ing inputs post gntpc, pre edep-sim on LAr world"
 ls -rt
 echo "Running edepsim"
+
+# When running edep-sim in LAr world, we want the hits to automatically 
+# break at the points where they would be crossing a material boundary in 
+# the real world. This is so the individual hits don't cross boundaries when 
+# examined in the real world, preventing us from having to interpolate the 
+# material they passed through.
+# To accomplish this, load up the ND geometry file and change all the 
+# material references to "LAr". Use this file for edep-sim instead of the 
+# infinite LAr bath.
+# We also want the entire detective to be active, so we add the string 
+# <auxiliary auxtype="SensDet" auxvalue="SimEnergyDeposit"/> where 
+# appropriate
+ALL_LAr_GEOMETRY_ND="ALL_LAr_$GEOMETRY_ND"
+if [ -f $ALL_LAr_GEOMETRY_ND ];
+then
+	bash activate_all_lar_geometry_nd.sh -i $GEOMETRY_ND -o $ALL_LAr_GEOMETRY_ND
+fi
+
 edep-sim -C \
-         -g ${GEOMETRY_LARBATH} \
+         -g ${ALL_LAr_GEOMETRY_ND} \
          -o edep_larbath.${RNDSEED}.root \
          -e ${NPER} \
          $EDEP_MAC
+
 echo "LS-ing inputs post edep-sim on LAr world, pre edep-sim on ND"
 ls -rt
 # The ND hall is not best-represented by an infinite LAr bath, so the 
