@@ -13,7 +13,7 @@ GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/R
 EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/edep"
 CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/caf"
 NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/pair_root"
-PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/pair_allinfo_h5"
+PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/pair_allinfo_h5"
 
 SAVE_GENIE=false
 SAVE_GTRAC=false
@@ -28,9 +28,8 @@ INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
 ND_CAFMAKER_DIR="ND_CAFMaker"
 TRANSROTS_DIR="DUNE_ND_GeoEff"
 
-GEOMETRY_LARBATH="LArBath_ndtopvol.gdml"
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
-GEOMETRY_ND_DUMMY_EDEP="edep_dummy_MPD_SPY_LAr_geo.root"
+
 TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
 EDEPSIM_ANA_CFG="UserConfig_tdr_nofdthrows.py"
@@ -169,7 +168,7 @@ echo "Running edepsim"
 # <auxiliary auxtype="SensDet" auxvalue="SimEnergyDeposit"/> where 
 # appropriate
 ALL_LAr_GEOMETRY_ND="ALL_LAr_$GEOMETRY_ND"
-if [ -f $ALL_LAr_GEOMETRY_ND ];
+if [ ! -f $ALL_LAr_GEOMETRY_ND ];
 then
 	bash activate_all_lar_geometry_nd.sh -i $GEOMETRY_ND -o $ALL_LAr_GEOMETRY_ND
 fi
@@ -207,13 +206,13 @@ echo "LS-ing inputs post edep-sim on ND, pre dumpTree on LAr"
 ls -rt
 echo "Running makeCAF dumpTree"
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_larbath.${RNDSEED}.root \
-                                        --edepsim_geometry ${GEOMETRY_ND_DUMMY_EDEP} \
+                                        --edepsim_geometry edep_ND.${RNDSEED}.root \
                                         --outfile edep_dump_larbath_nd.${RNDSEED}.root
 
 echo "LS-ing inputs post dumpTree on LAr, pre dumpTree on ND"
 ls -rt
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root \
-                                        --edepsim_geometry ${GEOMETRY_ND_DUMMY_EDEP} \
+                                        --edepsim_geometry edep_ND.${RNDSEED}.root \
                                         --outfile edep_dump_ND_nd.${RNDSEED}.root
 
 echo "LS-ing inputs post dumpTree on ND, pre makeCAF"
