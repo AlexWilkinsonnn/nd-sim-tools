@@ -28,7 +28,7 @@ INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
 ND_CAFMAKER_DIR="ND_CAFMaker"
 TRANSROTS_DIR="DUNE_ND_GeoEff"
 
-GEOMETRY_LARBATH="LArBath_ndtopcol.gdml"
+GEOMETRY_LARBATH="LArBath_ndtopvol.gdml"
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
 GEOMETRY_ND_DUMMY_EDEP="edep_dummy_MPD_SPY_LAr_geo.root"
 TOPVOL_ND="volArgonCubeActive"
