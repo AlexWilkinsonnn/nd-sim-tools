@@ -9,10 +9,10 @@
 ################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/genie"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/edep"
-CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/caf"
-NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/pair_root"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/caf"
+NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/pair_root"
 PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/pair_allinfo_h5"
 
 SAVE_GENIE=false
@@ -28,15 +28,16 @@ INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
 ND_CAFMAKER_DIR="ND_CAFMaker"
 TRANSROTS_DIR="DUNE_ND_GeoEff"
 
+GEOMETRY_LARBATH="LArBath_ndtopcol.gdml"
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
-
+GEOMETRY_ND_DUMMY_EDEP="edep_dummy_MPD_SPY_LAr_geo.root"
 TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
 EDEPSIM_ANA_CFG="UserConfig_tdr_nofdthrows.py"
 
-MODE="antineutrino" # "neutrino" or "antineutrino" (controls horn current)
-HORN="RHC" # "FHC" or "RHC" (controls naming of files)
-RHC="--rhc" # "" or "--rhc" (controls ND parametrized reconstruction algorithm)
+MODE="neutrino" # "neutrino" or "antineutrino" (controls horn current)
+HORN="FHC" # "FHC" or "RHC" (controls naming of files)
+RHC="" # "" or "--rhc" (controls ND parametrized reconstruction algorithm)
 FLUX="dk2nu"
 FLUXOPT="--dk2nu"
 # FLUX="gsimple"
@@ -156,25 +157,8 @@ echo "LS-ing inputs post gntpc, pre edep-sim on LAr world"
 ls -rt
 echo "Running edepsim"
 
-# When running edep-sim in LAr world, we want the hits to automatically 
-# break at the points where they would be crossing a material boundary in 
-# the real world. This is so the individual hits don't cross boundaries when 
-# examined in the real world, preventing us from having to interpolate the 
-# material they passed through.
-# To accomplish this, load up the ND geometry file and change all the 
-# material references to "LAr". Use this file for edep-sim instead of the 
-# infinite LAr bath.
-# We also want the entire detective to be active, so we add the string 
-# <auxiliary auxtype="SensDet" auxvalue="SimEnergyDeposit"/> where 
-# appropriate
-ALL_LAr_GEOMETRY_ND="ALL_LAr_$GEOMETRY_ND"
-if [ ! -f $ALL_LAr_GEOMETRY_ND ];
-then
-	bash activate_all_lar_geometry_nd.sh -i $GEOMETRY_ND -o $ALL_LAr_GEOMETRY_ND
-fi
-
 edep-sim -C \
-         -g ${ALL_LAr_GEOMETRY_ND} \
+         -g ${GEOMETRY_LARBATH} \
          -o edep_larbath.${RNDSEED}.root \
          -e ${NPER} \
          $EDEP_MAC
@@ -206,13 +190,13 @@ echo "LS-ing inputs post edep-sim on ND, pre dumpTree on LAr"
 ls -rt
 echo "Running makeCAF dumpTree"
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_larbath.${RNDSEED}.root \
-                                        --edepsim_geometry edep_ND.${RNDSEED}.root \
+                                        --edepsim_geometry ${GEOMETRY_ND_DUMMY_EDEP} \
                                         --outfile edep_dump_larbath_nd.${RNDSEED}.root
 
 echo "LS-ing inputs post dumpTree on LAr, pre dumpTree on ND"
 ls -rt
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root \
-                                        --edepsim_geometry edep_ND.${RNDSEED}.root \
+                                        --edepsim_geometry ${GEOMETRY_ND_DUMMY_EDEP} \
                                         --outfile edep_dump_ND_nd.${RNDSEED}.root
 
 echo "LS-ing inputs post dumpTree on ND, pre makeCAF"
