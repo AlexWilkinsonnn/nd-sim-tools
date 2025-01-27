@@ -69,7 +69,7 @@ NEVENTS="-e ${NPOT}"
 
 cp ${INPUTS_DIR}/* .
 echo "LS-ing inputs after initial copy."
-ls -rt
+ls -lrth
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
@@ -117,7 +117,7 @@ export GNUMIXML="GNuMIFlux.xml"
 export GNUMIFLUXXML="${PWD}/GNuMIFlux.xml"
 export GDK2NUFLUXXML="${PWD}/GNuMIFlux.xml"
 echo "LS-ing inputs pre-gevgen"
-ls -rt
+ls -lrth
 # Run GENIE
 echo "Running gevgen"
 gevgen_fnal \
@@ -136,7 +136,7 @@ gevgen_fnal \
     #-m ${GEOMETRY}.${TOPVOL}.maxpl.xml \
 cp ${MODE}.${RNDSEED}.ghep.root input_file.ghep.root
 echo "LS-ing inputs post-gevgen, pre gntpc"
-ls -rt
+ls -lrth
 # Convert the genie output to rootracker
 echo "Running gntpc"
 gntpc -i input_file.ghep.root -f rootracker \
@@ -153,7 +153,7 @@ echo "NPER=${NPER}"
 
 setup edepsim v3_0_0 -q e19:prof
 echo "LS-ing inputs post gntpc, pre edep-sim on LAr world"
-ls -rt
+ls -lrth
 echo "Running edepsim"
 
 # When running edep-sim in LAr world, we want the hits to automatically 
@@ -174,13 +174,13 @@ then
 fi
 
 edep-sim -C \
-         -g ${ALL_LAr_GEOMETRY_ND} \
+         -g ${GEOMETRY_ND} \
          -o edep_larbath.${RNDSEED}.root \
          -e ${NPER} \
          $EDEP_MAC
 
 echo "LS-ing inputs post edep-sim on LAr world, pre edep-sim on ND"
-ls -rt
+ls -lrth
 # The ND hall is not best-represented by an infinite LAr bath, so the 
 # simulation is improved by re-simulating just the muon in the ND hall. We 
 # run edep-sim just on the muon in the ND hall so that the hadronic energy 
@@ -203,20 +203,20 @@ export GNUMIXML="GNuMIFlux.xml"
 export GNUMIFLUXXML="${PWD}/GNuMIFlux.xml"
 export GDK2NUFLUXXML="${PWD}/GNuMIFlux.xml"
 echo "LS-ing inputs post edep-sim on ND, pre dumpTree on LAr"
-ls -rt
+ls -lrth
 echo "Running makeCAF dumpTree"
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_larbath.${RNDSEED}.root \
                                         --edepsim_geometry edep_ND.${RNDSEED}.root \
                                         --outfile edep_dump_larbath_nd.${RNDSEED}.root
 
 echo "LS-ing inputs post dumpTree on LAr, pre dumpTree on ND"
-ls -rt
+ls -lrth
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root \
                                         --edepsim_geometry edep_ND.${RNDSEED}.root \
                                         --outfile edep_dump_ND_nd.${RNDSEED}.root
 
 echo "LS-ing inputs post dumpTree on ND, pre makeCAF"
-ls -rt
+ls -lrth
 echo "Running makeCAF"
 cd $ND_CAFMAKER_DIR
 ./makeCAF_resim-muon --infile ../edep_dump_larbath_nd.${RNDSEED}.root \
@@ -229,7 +229,7 @@ cd $ND_CAFMAKER_DIR
           			 --oa ${OFFAXIS}
 cd ..
 echo "LS-ing inputs after makeCAF"
-ls -rt
+ls -lrth
 # Reset env again for GeoEff rotations+translation
 echo "Resetting env with env.sh"
 unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
