@@ -125,7 +125,7 @@ gevgen_fnal \
     -g ${GEOMETRY_ND} \
     -t ${TOPVOL_ND} \
     -L cm -D g_cm3 \
-    ${NEVENTS} \
+    -e ${NPOT} \
     --seed ${RNDSEED} \
     -r ${RNDSEED} \
     -o ${MODE} \
@@ -301,4 +301,3 @@ fi
 if [ "$SAVE_PAIR_H5" = true ]; then
   ifdh cp ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5 ${PAIR_H5_OUTPUT}/${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
 fi
-
