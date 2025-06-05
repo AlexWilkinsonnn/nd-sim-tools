@@ -267,7 +267,7 @@ def loop( evt, tgeo, tout ):
                     volName = node.GetName()
                     if ("_").join(volName.split("_")[:-2]) == "volLArActive":
                         hits.append(hit)
-                    elif (hMid.X() > -3573.5 and hMid.X() < 3573.5 and hMid.Y() > -1451.23 and hMid.Y() < 1558.97 and hMid.Z() > 4114.5 and hMid.Z() < 9205.5): # Correction should only include hits in ND-LAr.
+                    elif (hMid.X() > -3573.5 and hMid.X() < 3573.5 and hMid.Y() > -1451.23 and hMid.Y() < 1558.97 and hMid.Z() > 4114.5 and hMid.Z() < 9205.5):
                         inactive_hits.append(hit)
 
             # Truth-matching energy -- make dictionary of trajectory --> primary pdg
@@ -289,6 +289,8 @@ def loop( evt, tgeo, tout ):
 
             collar_energy = 0.
             total_energy = 0.
+            corr_total_energy = 0.
+            corr_collar_energy = 0.
 
             track_length = [0. for i in range(nfsp)]
             dEdX = [[] for i in range(nfsp)]
@@ -309,7 +311,11 @@ def loop( evt, tgeo, tout ):
 
                 traj = event.Trajectories[tid]
                 if traj.ParentId == -1: # primary particle
-                    idx = fsParticleIdx[hit.PrimaryId]
+                    try:
+                        idx = fsParticleIdx[hit.PrimaryId]
+                    except KeyError:
+                        print("KeyError: {} on event {}".format(hit.PrimaryId, ient))
+                        continue
                     trk_calo[idx] += hit.EnergyDeposit
                     end_point[idx] = hStop
                     dx = (hStop-hStart).Mag()
@@ -345,7 +351,19 @@ def loop( evt, tgeo, tout ):
                     elif pdg == -211: t_hadPim[0] += hit.EnergyDeposit
                     elif pdg == 111: t_hadPi0[0] += hit.EnergyDeposit
                     else: t_hadOther[0] += hit.EnergyDeposit
-                    
+              
+            corr_total_energy = total_energy
+            corr_collar_energy = collar_energy
+            t_CorrhadP[0] = t_hadP[0]
+            t_CorrhadN[0] = t_hadN[0]
+            t_CorrhadPip[0] = t_hadPip[0]
+            t_CorrhadPim[0] = t_hadPim[0]
+            t_CorrhadPi0[0] = t_hadPi0[0]
+            t_CorrhadOther[0] = t_hadOther[0]
+            
+            total_corr = 0.
+            total_corr_collar = 0.
+                  
             # Account for hits in inactive regions
             for hit in inactive_hits:
                 Edep = hit.EnergyDeposit
@@ -361,24 +379,31 @@ def loop( evt, tgeo, tout ):
 
                 if hit.PrimaryId != ileptraj: # here we do want to associate stuff to the lepton
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
-                    total_energy += Edep_corr
+                    corr_total_energy += Edep_corr
+                    total_corr += Edep_corr
 
                     # check if hit is in collar region
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
-                        collar_energy += Edep_corr
+                        corr_collar_energy += Edep_corr
+                        total_corr_collar += Edep_corr
                     
                     # Determine primary particle
                     pdg = traj_to_pdg[traj]
                     if pdg in [11, -11, 13, -13]: continue # lepton
-                    elif pdg == 2212: t_hadP[0] += Edep_corr
-                    elif pdg == 2112: t_hadN[0] += Edep_corr
-                    elif pdg == 211: t_hadPip[0] += Edep_corr
-                    elif pdg == -211: t_hadPim[0] += Edep_corr
-                    elif pdg == 111: t_hadPi0[0] += Edep_corr
-                    else: t_hadOther[0] += Edep_corr
+                    elif pdg == 2212: t_CorrhadP[0] += Edep_corr
+                    elif pdg == 2112: t_CorrhadN[0] += Edep_corr
+                    elif pdg == 211: t_CorrhadPip[0] += Edep_corr
+                    elif pdg == -211: t_CorrhadPim[0] += Edep_corr
+                    elif pdg == 111: t_CorrhadPi0[0] += Edep_corr
+                    else: t_CorrhadOther[0] += Edep_corr
 
             t_hadTot[0] = total_energy
+            t_CorrhadTot[0] = corr_total_energy
             t_hadCollar[0] = collar_energy
+            t_CorrhadCollar[0] = corr_collar_energy
+            
+            t_TotCorr[0] = total_corr
+            t_TotCorrCollar[0] = total_corr_collar
 
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
@@ -473,20 +498,40 @@ if __name__ == "__main__":
     tout.Branch('muECalLen',t_muECalLen,'muECalLen/F')
     t_hadTot = array('f', [0.] )
     tout.Branch('hadTot', t_hadTot, 'hadTot/F' )
+    t_CorrhadTot = array('f', [0.] )
+    tout.Branch('CorrhadTot', t_CorrhadTot, 'CorrhadTot/F')
     t_hadP = array('f', [0.] )
     tout.Branch('hadP', t_hadP, 'hadP/F' )
+    t_CorrhadP = array('f', [0.] )
+    tout.Branch('CorrhadP', t_CorrhadP, 'CorrhadP/F')
     t_hadN = array('f', [0.] )
     tout.Branch('hadN', t_hadN, 'hadN/F' )
+    t_CorrhadN = array('f', [0.] )
+    tout.Branch('CorrhadN', t_CorrhadN, 'CorrhadN/F')
     t_hadPip = array('f', [0.] )
     tout.Branch('hadPip', t_hadPip, 'hadPip/F' )
+    t_CorrhadPip = array('f', [0.] )
+    tout.Branch('CorrhadPip', t_CorrhadPip, 'CorrhadPip/F')
     t_hadPim = array('f', [0.] )
     tout.Branch('hadPim', t_hadPim, 'hadPim/F' )
+    t_CorrhadPim = array('f', [0.] )
+    tout.Branch('CorrhadPim', t_CorrhadPim, 'CorrhadPim/F')
     t_hadPi0 = array('f', [0.] )
     tout.Branch('hadPi0', t_hadPi0, 'hadPi0/F' )
+    t_CorrhadPi0 = array('f', [0.] )
+    tout.Branch('CorrhadPi0', t_CorrhadPi0, 'CorrhadPi0/F')
     t_hadOther = array('f', [0.] )
     tout.Branch('hadOther', t_hadOther, 'hadOther/F' )
+    t_CorrhadOther = array('f', [0.] )
+    tout.Branch('CorrhadOther', t_CorrhadOther, 'CorrhadOther/F')
     t_hadCollar = array('f', [0.] )
     tout.Branch('hadCollar', t_hadCollar, 'hadCollar/F' )
+    t_CorrhadCollar = array('f', [0.] )
+    tout.Branch('CorrhadCollar', t_CorrhadCollar, 'CorrhadCollar/F')
+    t_TotCorr = array('f', [0.] )
+    tout.Branch('TotCorr', t_TotCorr, 'TotCorr/F')
+    t_TotCorrCollar = array('f', [0.] )
+    tout.Branch('TotCorrCollar', t_TotCorrCollar, 'TotCorrCollar/F')
     t_nFS = array('i',[0])
     tout.Branch('nFS',t_nFS,'nFS/I')
     t_fsPdg = array('i',100*[0])
