@@ -252,6 +252,8 @@ def loop( evt, tgeo, tout ):
 
             # hadronic containment -- find hits in ArgonCube
             hits = []
+            inactive_hits = []
+            rho_LAr = 8.73811350597e18 # Extracted from edep-sim output
             for key in event.SegmentDetectors:
                 for hit in key.second:
                     hMid = ROOT.TVector3(
@@ -341,6 +343,37 @@ def loop( evt, tgeo, tout ):
                     elif pdg == -211: t_hadPim[0] += hit.EnergyDeposit
                     elif pdg == 111: t_hadPi0[0] += hit.EnergyDeposit
                     else: t_hadOther[0] += hit.EnergyDeposit
+                    
+            # Account for hits in inactive regions
+            for hit in inactive_hits:
+                Edep = hit.EnergyDeposit
+                hMid = ROOT.TVector3(
+                    (hit.Start[0] + hit.Stop[0])/2,
+                    (hit.Start[1] + hit.Stop[1])/2,
+                    (hit.Start[2] + hit.Stop[2])/2
+                )
+                node = tgeo.FindNode(hMid.X(), hMid.Y(), hMid.Z())
+                rho = node.GetMedium().GetMaterial().GetDensity()
+                corr = 1 - (rho / rho_LAr)
+                Edep_corr = Edep * corr
+
+                if hit.PrimaryId != ileptraj: # here we do want to associate stuff to the lepton
+                    hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
+                    total_energy += Edep_corr
+
+                    # check if hit is in collar region
+                    if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
+                        collar_energy += Edep_corr
+                    
+                    # Determine primary particle
+                    pdg = traj_to_pdg[traj]
+                    if pdg in [11, -11, 13, -13]: continue # lepton
+                    elif pdg == 2212: t_hadP[0] += Edep_corr
+                    elif pdg == 2112: t_hadN[0] += Edep_corr
+                    elif pdg == 211: t_hadPip[0] += Edep_corr
+                    elif pdg == -211: t_hadPim[0] += Edep_corr
+                    elif pdg == 111: t_hadPi0[0] += Edep_corr
+                    else: t_hadOther[0] += Edep_corr
 
             t_hadTot[0] = total_energy
             t_hadCollar[0] = collar_energy

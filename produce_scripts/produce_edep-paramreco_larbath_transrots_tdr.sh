@@ -9,10 +9,10 @@
 ################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/genie"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/edep"
-CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/caf"
-NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/RHC/pair_root"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/caf"
+NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/pair_root"
 PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/pair_allinfo_h5"
 
 SAVE_GENIE=false
@@ -29,14 +29,15 @@ ND_CAFMAKER_DIR="ND_CAFMaker"
 TRANSROTS_DIR="DUNE_ND_GeoEff"
 
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
+GEOMETRY_ND_LAr="ALL_LAr_MPD_SPY_LAr.gdml"
 
 TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
 EDEPSIM_ANA_CFG="UserConfig_tdr_nofdthrows.py"
 
-MODE="antineutrino" # "neutrino" or "antineutrino" (controls horn current)
-HORN="RHC" # "FHC" or "RHC" (controls naming of files)
-RHC="--rhc" # "" or "--rhc" (controls ND parametrized reconstruction algorithm)
+MODE="neutrino" # "neutrino" or "antineutrino" (controls horn current)
+HORN="FHC" # "FHC" or "RHC" (controls naming of files)
+RHC="" # "" or "--rhc" (controls ND parametrized reconstruction algorithm)
 FLUX="dk2nu"
 FLUXOPT="--dk2nu"
 # FLUX="gsimple"
@@ -174,7 +175,7 @@ then
 fi
 
 edep-sim -C \
-         -g ${GEOMETRY_ND} \
+         -g ${GEOMETRY_ND_LAr} \
          -o edep_larbath.${RNDSEED}.root \
          -e ${NPER} \
          $EDEP_MAC
