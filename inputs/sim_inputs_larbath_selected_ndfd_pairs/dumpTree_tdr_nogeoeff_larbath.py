@@ -361,6 +361,34 @@ def loop( evt, tgeo, tout ):
                 rho = node.GetMedium().GetMaterial().GetDensity()
                 corr = 1 - (rho / rho_LAr)
                 Edep_corr = Edep * corr
+                
+                hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
+                hStop = ROOT.TVector3( hit.Stop[0]/10.-offset[0], hit.Stop[1]/10.-offset[1], hit.Stop[2]/10.-offset[2] )
+
+                # Don't use edep-sim's PrimaryId, which thinks you want to associate absoltely everything with the primary
+                # Instead, get the actual contributors (usually only one) and take the biggest
+                tid = hit.Contrib[0]
+
+                traj = event.Trajectories[tid]
+                if traj.ParentId == -1: # primary particle
+                    idx = fsParticleIdx[hit.PrimaryId]
+                    trk_calo[idx] += Edep_corr
+                    end_point[idx] = hStop
+                    dx = (hStop-hStart).Mag()
+                    track_length[idx] += dx
+                    this_step[idx][1] += dx
+                    this_step[idx][0] += Edep_corr
+                    if this_step[idx][1] > 0.5:
+                        dEdX[idx].append( (this_step[idx][0], this_step[idx][1], hStart) ) # MeV/cm
+                        this_step[idx] = [0., 0.]
+                else: # non-primary energy
+                    for k,ep in enumerate(end_point):
+                        if ep is None: continue
+                        if (hStart-ep).Mag() < 10.:
+                            int_energy[k] += Edep_corr
+
+                if tid in tid_to_gamma:
+                    gamma_energy[tid_to_gamma[tid]] += Edep_corr
 
                 if hit.PrimaryId != ileptraj: # here we do want to associate stuff to the lepton
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )

@@ -250,6 +250,23 @@ echo "Running makeCAF"
 cd $ND_CAFMAKER_DIR
 ./makeCAF_resim-muon-EhadCorr --infile ../edep_dump_larbath_nd_events_EhadCorrNDLArOnly.${RNDSEED}.root --infile_resim ../edep_dump_ND_nd_events_EhadCorrNDLArOnly.${RNDSEED}.root --gfile ../${MODE}.${RNDSEED}.ghep.root --outfile ../${HORN}.${RNDSEED}.nd.CAF.root --fhicl ../fhicl.fcl --seed ${RNDSEED} ${RHC} --oa ${OFFAXIS}
 
+# 5-29-25 Found another bug whereby inactive hits were being attributed to 
+# the particle that created the last trajectory point. The next block 
+# creates data to examine the effect of this bug fix.
+
+python dumpTree_EhadcorrNDLArOnly_trajfix_events_tdr_nogeoeff_larbath.py --infile_edepsim edep_larbath.${RNDSEED}.root --edepsim_geometry edep_ND.${RNDSEED}.root --outfile edep_dump_larbath_nd_events_EhadCorrNDLArOnly_trajfix.${RNDSEED}.root
+
+echo "LS-ing inputs post dumpTree on LAr, pre dumpTree on ND"
+ls -lrth
+python dumpTree_EhadcorrNDLArOnly_trajfix_events_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root --edepsim_geometry edep_ND.${RNDSEED}.root --outfile edep_dump_ND_nd_events_EhadCorrNDLArOnly_trajfix.${RNDSEED}.root
+
+echo "LS-ing inputs post dumpTree on ND, pre makeCAF"
+ls -lrth
+echo "Running makeCAF"
+cd $ND_CAFMAKER_DIR
+./makeCAF_resim-muon-EhadCorr --infile ../edep_dump_larbath_nd_events_EhadCorrNDLArOnly_trajfix.${RNDSEED}.root --infile_resim ../edep_dump_ND_nd_events_EhadCorrNDLArOnly_trajfix.${RNDSEED}.root --gfile ../${MODE}.${RNDSEED}.ghep.root --outfile ../${HORN}.${RNDSEED}.nd.CAF.root --fhicl ../fhicl.fcl --seed ${RNDSEED} ${RHC} --oa ${OFFAXIS}
+
+
 
 cd ..
 echo "LS-ing inputs after makeCAF"
