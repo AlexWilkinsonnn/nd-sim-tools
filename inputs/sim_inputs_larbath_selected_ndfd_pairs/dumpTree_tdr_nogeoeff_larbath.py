@@ -453,6 +453,8 @@ def loop( evt, tgeo, tout ):
             t_hadPim[0] = (t_hadPim[0] + pim_energy_corr if t_hadPim[0] + pim_energy_corr > 0 else t_hadPim[0])
             t_hadPi0[0] = (t_hadPi0[0] + pi0_energy_corr if t_hadPi0[0] + pi0_energy_corr > 0 else t_hadPi0[0])
             t_hadOther[0] = (t_hadOther[0] + other_energy_corr if t_hadOther[0] + other_energy_corr > 0 else t_hadOther[0])
+            
+            t_totCorr[0] = total_energy_corr
 
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
@@ -561,6 +563,8 @@ if __name__ == "__main__":
     tout.Branch('hadOther', t_hadOther, 'hadOther/F' )
     t_hadCollar = array('f', [0.] )
     tout.Branch('hadCollar', t_hadCollar, 'hadCollar/F' )
+    t_totCorr = array('f', [0.] )
+    tout.Branch('totCorr', t_totCorr, 'totCorr/F' )
     t_nFS = array('i',[0])
     tout.Branch('nFS',t_nFS,'nFS/I')
     t_fsPdg = array('i',100*[0])

@@ -183,7 +183,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree* tree_resim, TTree * gtree
   // read in dumpTree output file
   int ievt, nFS;
   float hadTot, hadCollar;
-  float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
+  float hadP, hadN, hadPip, hadPim, hadPi0, hadOther, totCorr;
   float vtx[3];
   int fsPdg[100];
   float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsTrkLen[100], fsTrkLenPerp[100];
@@ -196,6 +196,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree* tree_resim, TTree * gtree
   tree->SetBranchAddress( "hadPim", &hadPim );
   tree->SetBranchAddress( "hadPi0", &hadPi0 );
   tree->SetBranchAddress( "hadOther", &hadOther );
+  tree->SetBranchAddress( "totCorr", &totCorr );
   tree->SetBranchAddress( "vtx", vtx );
   tree->SetBranchAddress( "nFS", &nFS );
   tree->SetBranchAddress( "fsPdg", fsPdg );
@@ -444,6 +445,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree* tree_resim, TTree * gtree
       caf.eRecoPim = hadPim*0.001;
       caf.eRecoPi0 = hadPi0*0.001;
       caf.eRecoOther = hadOther*0.001;
+      caf.totCorr = totCorr*0.001;
 
       caf.pileup_energy = 0.;
       if( rando->Rndm() < par.pileup_frac ) caf.pileup_energy = rando->Rndm() * par.pileup_max;

@@ -29,7 +29,7 @@ public:
   // True particle counts
   int nP, nN, nipip, nipim, nipi0, nikp, nikm, nik0, niem, niother, nNucleus, nUNKNOWN;
   double eP, eN, ePip, ePim, ePi0, eOther;
-  double eRecoP, eRecoN, eRecoPip, eRecoPim, eRecoPi0, eRecoOther;
+  double eRecoP, eRecoN, eRecoPip, eRecoPim, eRecoPi0, eRecoOther, totCorr;
 
   // vertex -- smear it?
   double vtx_x, vtx_y, vtx_z;
