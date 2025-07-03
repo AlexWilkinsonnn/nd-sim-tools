@@ -267,7 +267,10 @@ def loop( evt, tgeo, tout ):
                     volName = node.GetName()
                     if ("_").join(volName.split("_")[:-2]) == "volLArActive":
                         hits.append(hit)
-                    elif (hMid.X() > -3573.5 and hMid.X() < 3573.5 and hMid.Y() > -1451.23 and hMid.Y() < 1558.97 and hMid.Z() > 4114.5 and hMid.Z() < 9205.5): # Correction should only include hits in ND-LAr.
+                    # Correction should only include hits in ND-LAr.
+                    elif (hMid.X() > -3573.5 and hMid.X() < 3573.5 and 
+                        hMid.Y() > -1451.23 and hMid.Y() < 1558.97 and 
+                        hMid.Z() > 4114.5 and hMid.Z() < 9205.5):
                         inactive_hits.append(hit)
 
             # Truth-matching energy -- make dictionary of trajectory --> primary pdg
