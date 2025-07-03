@@ -250,12 +250,22 @@ def loop( evt, tgeo, tout ):
 
                 if tot_length > 50.: t_muonReco[0] = 2 # tracker
 
-            # hadronic containment -- find hits in ArgonCube
+            # hadronic containment -- find hits in ArgonCube. 
+            # Sort into active vs. inactive. 
+            # Inactive hits will be used to correct the active hits to 
+            # make the LArbath reco quantities closer to what would 
+            # actually be seen in the ND
             hits = []
             inactive_hits = []
-            rho_LAr = 8.73811350597e18 # Extracted from edep-sim output
+            rho_LAr = 8.73811350597e18 # Extracted from edep-sim output. 
+                                       # Units of MeV ns^2 mm^-5
+                                       
+            # For each detector volume that has hits:
             for key in event.SegmentDetectors:
+            	# For each hit in that volume:
                 for hit in key.second:
+                    # Find the midpoint and the volume it's in. 
+                    # Check that it's a valid volume
                     hMid = ROOT.TVector3(
                         (hit.Start[0] + hit.Stop[0])/2,
                         (hit.Start[1] + hit.Stop[1])/2,
@@ -264,6 +274,11 @@ def loop( evt, tgeo, tout ):
                     node = tgeo.FindNode(hMid.X(), hMid.Y(), hMid.Z())
                     if not node:
                         continue
+                    
+                    # We determine if the hit is in the active v. inactive 
+                    # region using the volume name.
+                    # The volume name for the active regions is 
+                    # "volLarActive". Everything else is inactive.
                     volName = node.GetName()
                     if ("_").join(volName.split("_")[:-2]) == "volLArActive":
                         hits.append(hit)
@@ -273,14 +288,27 @@ def loop( evt, tgeo, tout ):
                         hMid.Z() > 4114.5 and hMid.Z() < 9205.5):
                         inactive_hits.append(hit)
 
-            # Truth-matching energy -- make dictionary of trajectory --> primary pdg
+            # Truth-matching energy
+            # We want to associate all of the energy from simulated 
+            # particles in Geant to the ultimate parent particle, that is, 
+            # the primary particle from whence that energy came.
+            
+            # Make dictionary of trajectory --> primary pdg
             traj_to_pdg = {}
-            # For pi0s, stop at the photons to determine the visible energy due to gamma1/gamma2
+            # For pi0s, stop at the photons to determine the visible 
+            # energy due to gamma1/gamma2. That is, make a dictionary of 
+            # track IDs of photons that came from pi0s.
             tid_to_gamma = {}
             gamma_tids = []
+            # For each trajectory point:
             for traj in event.Trajectories:
+                # Mom is the track identifier for the particle that 
+                # created the trajectory in question. If it's a primary 
+                # particle, the value is -1. 
                 mom = traj.ParentId
+                # Each particle has a unique track ID. 
                 tid = traj.TrackId
+                # The first n trajectories are the initial trajectories for the n primary particles in an event. The next line therefore considers if 
                 if event.Trajectories[mom].PDGCode == 111 and event.Trajectories[tid].PDGCode == 22 and event.Trajectories[mom].ParentId == -1:
                     gamma_tids.append(tid)
                 while mom != -1:
@@ -348,6 +376,15 @@ def loop( evt, tgeo, tout ):
                     elif pdg == -211: t_hadPim[0] += hit.EnergyDeposit
                     elif pdg == 111: t_hadPi0[0] += hit.EnergyDeposit
                     else: t_hadOther[0] += hit.EnergyDeposit
+            
+            total_energy_corr = 0.0
+            collar_energy_corr = 0.0
+            proton_energy_corr = 0.0
+            neutron_energy_corr = 0.0
+            pip_energy_corr = 0.0
+            pim_energy_corr = 0.0
+            pi0_energy_corr = 0.0
+            other_energy_corr = 0.0
                     
             # Account for hits in inactive regions
             for hit in inactive_hits:
@@ -392,24 +429,30 @@ def loop( evt, tgeo, tout ):
 
                 if hit.PrimaryId != ileptraj: # here we do want to associate stuff to the lepton
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
-                    total_energy += Edep_corr
+                    total_energy_corr += Edep_corr
 
                     # check if hit is in collar region
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
-                        collar_energy += Edep_corr
+                        collar_energy_corr += Edep_corr
                     
                     # Determine primary particle
                     pdg = traj_to_pdg[traj]
                     if pdg in [11, -11, 13, -13]: continue # lepton
-                    elif pdg == 2212: t_hadP[0] += Edep_corr
-                    elif pdg == 2112: t_hadN[0] += Edep_corr
-                    elif pdg == 211: t_hadPip[0] += Edep_corr
-                    elif pdg == -211: t_hadPim[0] += Edep_corr
-                    elif pdg == 111: t_hadPi0[0] += Edep_corr
-                    else: t_hadOther[0] += Edep_corr
+                    elif pdg == 2212: proton_energy_corr += Edep_corr
+                    elif pdg == 2112: neutron_energy_corr += Edep_corr
+                    elif pdg == 211: pip_energy_corr += Edep_corr
+                    elif pdg == -211: pim_energy_corr += Edep_corr
+                    elif pdg == 111: pi0_energy_corr += Edep_corr
+                    else: other_energy_corr += Edep_corr
 
-            t_hadTot[0] = total_energy
-            t_hadCollar[0] = collar_energy
+            t_hadTot[0] = (total_energy + total_energy_corr if total_energy + total_energy_corr > 0 else total_energy)
+            t_hadCollar[0] = (collar_energy + collar_energy_corr if collar_energy + collar_energy_corr > 0 else collar_energy)
+            t_hadP[0] = (t_hadP[0] + proton_energy_corr if t_hadP[0] + proton_energy_corr > 0 else t_hadP[0])
+            t_hadN[0] = (t_hadN[0] + neutron_energy_corr if t_hadN[0] + neutron_energy_corr > 0 else t_hadN[0])
+            t_hadPip[0] = (t_hadPip[0] + pip_energy_corr if t_hadPip[0] + pip_energy_corr > 0 else t_hadPip[0])
+            t_hadPim[0] = (t_hadPim[0] + pim_energy_corr if t_hadPim[0] + pim_energy_corr > 0 else t_hadPim[0])
+            t_hadPi0[0] = (t_hadPi0[0] + pi0_energy_corr if t_hadPi0[0] + pi0_energy_corr > 0 else t_hadPi0[0])
+            t_hadOther[0] = (t_hadOther[0] + other_energy_corr if t_hadOther[0] + other_energy_corr > 0 else t_hadOther[0])
 
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
