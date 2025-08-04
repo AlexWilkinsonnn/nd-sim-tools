@@ -51,7 +51,7 @@ paramreco_dtype = np.dtype([("eventID", "u4"), ("cafTree_event", "u4"),
                             ("ePip", "f4"), ("ePim", "f4"), ("ePi0", "f4"), ("eOther", "f4"),
                             ("eRecoP", "f4"), ("eRecoN", "f4"),
                             ("eRecoPip", "f4"), ("eRecoPim", "f4"), ("eRecoPi0", "f4"),
-                            ("eRecoOther", "f4"),
+                            ("eRecoOther", "f4"), ("totCorr", "f4"),
                             ("det_x", "i4"),
                             ("vtx_x", "f4"), ("vtx_y", "f4"), ("vtx_z", "f4"),
                             ("Ev_reco", "f4"), ("Elep_reco", "f4"),
@@ -379,6 +379,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
             prec["eRecoPim"] = prec_event.eRecoPim
             prec["eRecoPi0"] = prec_event.eRecoPi0
             prec["eRecoOther"] = prec_event.eRecoOther
+            prec["totCorr"] = prec_event.totCorr
             prec["det_x"] = prec_event.det_x
             prec["vtx_x"] = prec_event.vtx_x
             prec["vtx_y"] = prec_event.vtx_y
