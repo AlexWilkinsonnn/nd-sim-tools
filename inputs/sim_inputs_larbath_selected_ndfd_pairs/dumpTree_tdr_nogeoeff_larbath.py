@@ -56,7 +56,7 @@ def loop( evt, tgeo, tout ):
         posText = posText.split(",")
         beamRefDetCoord = [ float(posText[i]) for i in range(3)]
         detRefBeamCoord = [ float(posText[i]) for i in range(3,6)]
-    except Exception, e:
+    except Exception as e:
         print(str(e))
         print("dumpTree.py WARNING!!! Error reading GNUMIXML file. Set GNUMIXML enviornment variable to point at GNuMI flux configuration xml file. Exitting!")
         exit(-1)
@@ -66,13 +66,13 @@ def loop( evt, tgeo, tout ):
 
     N = events.GetEntries()
 
-    print "Starting loop over %d entries" % N
+    print("Starting loop over %d entries" % N)
     ient = 0 # This is unnecessary
     iwritten = 0
     for ient in range(N):
 
         if ient % 100 == 0:
-            print "Event %d of %d..." % (ient,N)
+            print("Event %d of %d..." % (ient,N))
         events.GetEntry(ient)
 
         t_eventID[0] = -1;
@@ -294,14 +294,17 @@ def loop( evt, tgeo, tout ):
             # particle, that is, the primary particle from whence that 
             # energy came.
             
-            # Make dictionary of trajectory --> primary pdg
+            # Make dictionaries of trajectory --> primary pdg, active 
+            # energy, inactive energy
             traj_to_pdg = {}
+            traj_to_Eact = {}
+            traj_to_Einact = {}
             # For pi0s, stop at the photons to determine the visible 
             # energy due to gamma1/gamma2. To do this, make a dictionary 
             # where the keys are the track IDs of particles that came from 
             # a pi0 gamma, and the values are the trackIDs of the gammas 
             # that correspond to the trackID key. The list is to record 
-            # the trackIDs of the gammas foming from a primary pi0.
+            # the trackIDs of the gammas forming from a primary pi0.
             tid_to_gamma = {}
             gamma_tids = []
             # For each trajectory (aka particle in Geant):
@@ -338,12 +341,15 @@ def loop( evt, tgeo, tout ):
                         # gamma from a pi0, so add it to the dictionary.
                         tid_to_gamma[tid] = mom
                 # We now have a traj, and the trackID (tid) of its 
-                # ultimate mother. Record in the dictionary.
+                # ultimate mother. Record the PDG in the dictionary and 
+                # set the energy counter for that trajectory to 0.0
                 traj_to_pdg[traj] = event.Trajectories[tid].PDGCode
+                traj_to_Eact[traj] = 0.0
+                traj_to_Einact[traj] = 0.0
 
-            # Initialize everything necessary for doing reco.
+            # Initialize collar energy, as it will be handled like a 
+            # trajectory
             collar_energy = 0.
-            total_energy = 0.
 
             # Each of these lists has one entry per primary particle
             track_length = [0. for i in range(nfsp)]
@@ -429,39 +435,29 @@ def loop( evt, tgeo, tout ):
                 # lepton)
                 if hit.PrimaryId != ileptraj:
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
-                    total_energy += hit.EnergyDeposit
 
                     # check if hit is in collar region
-                    if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
+                    if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1]  or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
                         collar_energy += hit.EnergyDeposit
                     
-                    # Determine primary particle
-                    pdg = traj_to_pdg[traj]
-                    if pdg in [11, -11, 13, -13]: continue # lepton
-                    elif pdg == 2212: t_hadP[0] += hit.EnergyDeposit
-                    elif pdg == 2112: t_hadN[0] += hit.EnergyDeposit
-                    elif pdg == 211: t_hadPip[0] += hit.EnergyDeposit
-                    elif pdg == -211: t_hadPim[0] += hit.EnergyDeposit
-                    elif pdg == 111: t_hadPi0[0] += hit.EnergyDeposit
-                    else: t_hadOther[0] += hit.EnergyDeposit
+                    # Add the energy to the trajectory's active energy 
+                    # register
+                    traj_to_Eact[traj] += hit.EnergyDeposit
             
             # Repeat but for the inactive hits
-            # For the hit-based correction, we track all of these 
-            # corrections separately. When all have been calculated, we 
-            # add them to the uncorrected values to get the corrected 
+            # For the hit-based correction, we track the corrections for 
+            # each trajectory separately. When all have been calculated, 
+            # we add them to the uncorrected values to get the corrected 
             # ones. If the result is negative, the correction was too 
             # large, typically indicating that the majority of a 
             # particle's energy deposits were in an inactive region. In 
             # this case, we'd be better off not correcting at all. So, if 
-            # the result is negative, we discard the correction.
-            total_energy_corr = 0.0
+            # the result is negative, we discard the correction. We sum 
+            # over the corrected trajectories to get the reconstructed, 
+            # corrected hadronic energy, proton energy, neutron energy, 
+            # etc.
+            # The collar is treated like its own trajectory
             collar_energy_corr = 0.0
-            proton_energy_corr = 0.0
-            neutron_energy_corr = 0.0
-            pip_energy_corr = 0.0
-            pim_energy_corr = 0.0
-            pi0_energy_corr = 0.0
-            other_energy_corr = 0.0
                     
             # Account for hits in inactive regions. For each of these hits
             for hit in inactive_hits:
@@ -548,34 +544,38 @@ def loop( evt, tgeo, tout ):
                 # association and only consider those hits not due to the 
                 # lepton)
                 if hit.PrimaryId != ileptraj:
-                    total_energy_corr += Edep_corr
-
+                
                     # check if hit is in collar region
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
                         collar_energy_corr += Edep_corr
                     
                     # Determine primary particle
-                    pdg = traj_to_pdg[traj]
-                    if pdg in [11, -11, 13, -13]: continue # lepton
-                    elif pdg == 2212: proton_energy_corr += Edep_corr
-                    elif pdg == 2112: neutron_energy_corr += Edep_corr
-                    elif pdg == 211: pip_energy_corr += Edep_corr
-                    elif pdg == -211: pim_energy_corr += Edep_corr
-                    elif pdg == 111: pi0_energy_corr += Edep_corr
-                    else: other_energy_corr += Edep_corr
+                    traj_to_Einact[traj] += Edep_corr
 
             # Perform the check to make sure none of the corrections 
-            # result in negative energies.
-            t_hadTot[0] = (total_energy + total_energy_corr if total_energy + total_energy_corr > 0 else total_energy)
+            # result in negative energies for the trajectories.
+            traj_to_Ereco = {}
+            for traj in traj_to_pdg.keys():
+            	traj_E = traj_to_Eact[traj] + traj_to_Einact[traj]
+            	if traj_E < 0:
+            	    traj_to_Ereco[traj] = traj_to_Eact[traj]
+            	else:
+            	    traj_to_Ereco[traj] = traj_E
+            	    t_totCorr[0] += traj_to_Einact[traj]
             t_hadCollar[0] = (collar_energy + collar_energy_corr if collar_energy + collar_energy_corr > 0 else collar_energy)
-            t_hadP[0] = (t_hadP[0] + proton_energy_corr if t_hadP[0] + proton_energy_corr > 0 else t_hadP[0])
-            t_hadN[0] = (t_hadN[0] + neutron_energy_corr if t_hadN[0] + neutron_energy_corr > 0 else t_hadN[0])
-            t_hadPip[0] = (t_hadPip[0] + pip_energy_corr if t_hadPip[0] + pip_energy_corr > 0 else t_hadPip[0])
-            t_hadPim[0] = (t_hadPim[0] + pim_energy_corr if t_hadPim[0] + pim_energy_corr > 0 else t_hadPim[0])
-            t_hadPi0[0] = (t_hadPi0[0] + pi0_energy_corr if t_hadPi0[0] + pi0_energy_corr > 0 else t_hadPi0[0])
-            t_hadOther[0] = (t_hadOther[0] + other_energy_corr if t_hadOther[0] + other_energy_corr > 0 else t_hadOther[0])
             
-            t_totCorr[0] = total_energy_corr
+            # Assign the trajectories' energies to the appropriate places
+            for traj in traj_to_pdg.keys():
+                traj_E = traj_to_Ereco[traj]
+                traj_pdg = traj_to_pdg[traj]
+                t_hadTot[0] += traj_E
+                if traj_pdg in [11, -11, 13, -13]: continue # lepton
+                elif traj_pdg == 2212: t_hadP[0] += traj_E
+                elif traj_pdg == 2112: t_hadN[0] += traj_E
+                elif traj_pdg == 211: t_hadPip[0] += traj_E
+                elif traj_pdg == -211: t_hadPim[0] += traj_E
+                elif traj_pdg == 111: t_hadPi0[0] += traj_E
+                else: t_hadOther[0] += traj_E
 
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
@@ -609,7 +609,7 @@ def loop( evt, tgeo, tout ):
                 if t_fsGamma1[mom] == 0.: t_fsGamma1[mom] = gamma_energy[t]
                 elif t_fsGamma2[mom] == 0.: t_fsGamma2[mom] = gamma_energy[t]
                 else:
-                    print "Pi0 has more than two photons wtf"
+                    print("Pi0 has more than two photons wtf")
 
 
             tout.Fill()
