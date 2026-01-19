@@ -180,7 +180,7 @@ export GNUMIXML="GNuMIFlux.xml"
 echo "Running makeCAF dumpTree"
 python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root \
                                         --edepsim_geometry edep_ND.${RNDSEED}.root \
-                                        --outfile edep_dump_larbath_nd.${RNDSEED}.root \
+                                        --outfile edep_dump_larbath_nd.${RNDSEED}.root
 
 echo "Running makeCAF"
 cd $ND_CAFMAKER_DIR
