@@ -183,12 +183,13 @@ void loop( CAF_EhadCorr &caf, params &par, TTree * tree, TTree* tree_resim, TTre
   // read in dumpTree output file
   int ievt, nFS;
   float hadTot, CorrhadTot, hadCollar, CorrhadCollar;
-  float hadP, CorrhadP, hadN, CorrhadN, hadPip, CorrhadPip, hadPim, \
-    CorrhadPim, hadPi0, CorrhadPi0, hadOther, CorrhadOther;
+  float hadP, CorrhadP, CorrP, hadN, CorrhadN, CorrN, \
+		hadPip, CorrhadPip, CorrPip, hadPim, CorrhadPim, CorrPim, \
+		hadPi0, CorrhadPi0, CorrPi0, hadOther, CorrhadOther, CorrOther;
   float TotCorr, TotCorrCollar;
   float vtx[3];
   int fsPdg[100];
-  float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsTrkLen[100], fsTrkLenPerp[100];
+  float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsEreco[100], CorrfsEreco[100], fsErecoCorr[100], fsTrkLen[100], fsTrkLenPerp[100];
   tree->SetBranchAddress( "ievt", &ievt );
   tree->SetBranchAddress( "hadTot", &hadTot );
   tree->SetBranchAddress( "CorrhadTot", &CorrhadTot );
@@ -196,16 +197,23 @@ void loop( CAF_EhadCorr &caf, params &par, TTree * tree, TTree* tree_resim, TTre
   tree->SetBranchAddress( "CorrhadCollar", &CorrhadCollar );
   tree->SetBranchAddress( "hadP", &hadP );
   tree->SetBranchAddress( "CorrhadP", &CorrhadP );
+  tree->SetBranchAddress( "TotCorrP", &CorrP );
   tree->SetBranchAddress( "hadN", &hadN );
   tree->SetBranchAddress( "CorrhadN", &CorrhadN );
+  tree->SetBranchAddress( "TotCorrN", &CorrN );
   tree->SetBranchAddress( "hadPip", &hadPip );
   tree->SetBranchAddress( "CorrhadPip", &CorrhadPip );
+  tree->SetBranchAddress( "TotCorrPip", &CorrPip );
   tree->SetBranchAddress( "hadPim", &hadPim );
   tree->SetBranchAddress( "CorrhadPim", &CorrhadPim );
+  tree->SetBranchAddress( "TotCorrPim", &CorrPim );
   tree->SetBranchAddress( "hadPi0", &hadPi0 );
   tree->SetBranchAddress( "CorrhadPi0", &CorrhadPi0 );
+  tree->SetBranchAddress( "TotCorrPi0", &CorrPi0 );
   tree->SetBranchAddress( "hadOther", &hadOther );
   tree->SetBranchAddress( "CorrhadOther", &CorrhadOther );
+  tree->SetBranchAddress( "TotCorrOther", &CorrOther );
+
   tree->SetBranchAddress( "TotCorr", &TotCorr );
   tree->SetBranchAddress( "TotCorrCollar", &TotCorrCollar );
   tree->SetBranchAddress( "vtx", vtx );
@@ -215,6 +223,9 @@ void loop( CAF_EhadCorr &caf, params &par, TTree * tree, TTree* tree_resim, TTre
   tree->SetBranchAddress( "fsPy", fsPy );
   tree->SetBranchAddress( "fsPz", fsPz );
   tree->SetBranchAddress( "fsE", fsE );
+  tree->SetBranchAddress( "fsTrkCalo", fsEreco );
+  tree->SetBranchAddress( "fsTrkCaloCorr", fsErecoCorr );
+  tree->SetBranchAddress( "CorrfsTrkCalo", CorrfsEreco );
   tree->SetBranchAddress( "fsTrkLen", fsTrkLen );
   tree->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp );
 
@@ -303,7 +314,10 @@ void loop( CAF_EhadCorr &caf, params &par, TTree * tree, TTree* tree_resim, TTre
     caf.eRecoPim = 0.;
     caf.eRecoPi0 = 0.;
     caf.eOther = 0.;
+	caf.nFSP = nFS;
     for( int i = 0; i < nFS; ++i ) {
+      caf.pdg[i] = fsPdg[i];
+      caf.PrimEtrue[i] = fsE[i];
       double ke = 0.001*(fsE[i] - sqrt(fsE[i]*fsE[i] - fsPx[i]*fsPx[i] - fsPy[i]*fsPy[i] - fsPz[i]*fsPz[i]));
       if( fsPdg[i] == caf.LepPDG && abs(fsPdg[i] == 13)) {	
         lepP4.SetPxPyPzE( fsPx_rs[i]*0.001, fsPy_rs[i]*0.001, fsPz_rs[i]*0.001, fsE_rs[i]*0.001 );
@@ -358,6 +372,9 @@ void loop( CAF_EhadCorr &caf, params &par, TTree * tree, TTree* tree_resim, TTre
       int reco_electron_pdg = 0;
       for( int i = 0; i < nFS; ++i ) {
         int pdg = fsPdg[i];
+		caf.PrimEreco[i] = fsEreco[i];
+        caf.PrimErecoCorr[i] = fsErecoCorr[i];
+        caf.CorrPrimEreco[i] = CorrfsEreco[i];
         double p = sqrt(fsPx[i]*fsPx[i] + fsPy[i]*fsPy[i] + fsPz[i]*fsPz[i]);
         double KE = fsE[i] - sqrt(fsE[i]*fsE[i] - p*p);
 
@@ -450,20 +467,28 @@ void loop( CAF_EhadCorr &caf, params &par, TTree * tree, TTree* tree_resim, TTre
       // Hadronic energy calorimetrically
       caf.Ev_reco = caf.Elep_reco + hadTot*0.001;
       caf.CorrEv_reco = caf.Elep_reco + CorrhadTot*0.001;
+      caf.Ehad_reco = hadTot*0.001;
+      caf.CorrEhad_reco = CorrhadTot*0.001;
       caf.Ehad_veto = hadCollar;
       caf.CorrEhad_veto = CorrhadCollar;
       caf.eRecoP = hadP*0.001;
       caf.CorreRecoP = CorrhadP*0.001;
+	  caf.CorrP = CorrP*0.001;
       caf.eRecoN = hadN*0.001;
       caf.CorreRecoN = CorrhadN*0.001;
+	  caf.CorrN = CorrN*0.001;
       caf.eRecoPip = hadPip*0.001;
       caf.CorreRecoPip = CorrhadPip*0.001;
+	  caf.CorrPip = CorrPip*0.001;
       caf.eRecoPim = hadPim*0.001;
       caf.CorreRecoPim = CorrhadPim*0.001;
+	  caf.CorrPim = CorrPim*0.001;
       caf.eRecoPi0 = hadPi0*0.001;
       caf.CorreRecoPi0 = CorrhadPi0*0.001;
+	  caf.CorrPi0 = CorrPi0*0.001;
       caf.eRecoOther = hadOther*0.001;
       caf.CorreRecoOther = CorrhadOther*0.001;
+	  caf.CorrOther = CorrOther*0.001;
 
       caf.TotCorr = TotCorr*0.001;
       caf.TotCorrCollar = TotCorrCollar*0.001;

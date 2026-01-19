@@ -31,13 +31,19 @@ public:
   double eP, eN, ePip, ePim, ePi0, eOther;
   double eRecoP, eRecoN, eRecoPip, eRecoPim, eRecoPi0, eRecoOther;
   double CorreRecoP, CorreRecoN, CorreRecoPip, CorreRecoPim, CorreRecoPi0, CorreRecoOther;
+  double CorrP, CorrN, CorrPip, CorrPim, CorrPi0, CorrOther;
+  // Particle energy info
+  int nFSP;
+  int pdg[100];
+  float PrimEtrue[100];
 
   // vertex -- smear it?
   double vtx_x, vtx_y, vtx_z;
   double det_x;
 
   // Reco information CV
-  double Ev_reco, CorrEv_reco, Elep_reco, theta_reco;
+  double Ev_reco, CorrEv_reco, Elep_reco, Ehad_reco, CorrEhad_reco, \
+	theta_reco;
   int reco_numu, reco_nue, reco_nc, reco_q;
   int muon_contained, muon_tracker, muon_ecal, muon_exit, reco_lepton_pdg;
   float muon_endpoint[3];
@@ -45,11 +51,12 @@ public:
   double Ehad_veto, CorrEhad_veto;
   double TotCorr, TotCorrCollar;
   double pileup_energy;
+  float PrimEreco[100];
+  float PrimErecoCorr[100];
+  float CorrPrimEreco[100];
 
   // Gas TPC variables
   int gastpc_pi_min_mult, gastpc_pi_pl_mult;
-  int nFSP;
-  int pdg[100];
   double trkLen[100], trkLenPerp[100], ptrue[100], partEvReco[100];
 
   // reweights -- make sure big enough to hold all the variations for each knob, and all the knobs

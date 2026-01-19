@@ -65,16 +65,25 @@ CAF_EhadCorr::CAF_EhadCorr( std::string filename, bool isGas )
   cafMVA->Branch("eOther",    &eOther,     "eOther/D");
   cafMVA->Branch("eRecoP",        &eRecoP,         "eRecoP/D");
   cafMVA->Branch("CorreRecoP",    &CorreRecoP,     "CorreRecoP/D");
+  cafMVA->Branch("CorrP",	&CorrP,	"CorrP/D");
   cafMVA->Branch("eRecoN",        &eRecoN,         "eRecoN/D");
   cafMVA->Branch("CorreRecoN",    &CorreRecoN,     "CorreRecoN/D");
+  cafMVA->Branch("CorrN",	&CorrN,	"CorrN/D");
   cafMVA->Branch("eRecoPip",      &eRecoPip,       "eRecoPip/D");
   cafMVA->Branch("CorreRecoPip",  &CorreRecoPip,   "CorreRecoPip/D");
+  cafMVA->Branch("CorrPip",	&CorrPip,	"CorrPip/D");
   cafMVA->Branch("eRecoPim",      &eRecoPim,       "eRecoPim/D");
   cafMVA->Branch("CorreRecoPim",  &CorreRecoPim,   "CorreRecoPim/D");
+  cafMVA->Branch("CorrPim",	&CorrPim,	"CorrPim/D");
   cafMVA->Branch("eRecoPi0",      &eRecoPi0,       "eRecoPi0/D");
   cafMVA->Branch("CorreRecoPi0",  &CorreRecoPi0,   "CorreRecoPi0/D");
+  cafMVA->Branch("CorrPi0",	&CorrPi0,	"CorrPi0/D");
   cafMVA->Branch("eRecoOther",    &eRecoOther,     "eRecoOther/D");
   cafMVA->Branch("CorreRecoOther",  &CorreRecoOther,   "CorreRecoOther/D");
+  cafMVA->Branch("CorrOther",	&CorrOther,	"CorrOther/D");
+
+  cafMVA->Branch( "nFSP", &nFSP, "nFSP/I" );
+  cafMVA->Branch( "pdg", pdg, "pdg[nFSP]/I" ); 
 
   cafMVA->Branch( "det_x", &det_x, "det_x/D" );
   cafMVA->Branch( "vtx_x", &vtx_x, "vtx_x/D" );
@@ -84,6 +93,8 @@ CAF_EhadCorr::CAF_EhadCorr( std::string filename, bool isGas )
   cafMVA->Branch( "Ev_reco", &Ev_reco, "Ev_reco/D" );
   cafMVA->Branch( "CorrEv_reco", &CorrEv_reco, "CorrEv_reco/D");
   cafMVA->Branch( "Elep_reco", &Elep_reco, "Elep_reco/D" );
+  cafMVA->Branch( "Ehad_reco", &Ehad_reco, "Ehad_reco/D" );
+  cafMVA->Branch( "CorrEhad_reco", &CorrEhad_reco, "CorrEhad_reco/D" );
   cafMVA->Branch( "theta_reco", &theta_reco, "theta_reco/D" );
   cafMVA->Branch( "reco_numu", &reco_numu, "reco_numu/I" );
   cafMVA->Branch( "reco_nue", &reco_nue, "reco_nue/I" );
@@ -103,11 +114,14 @@ CAF_EhadCorr::CAF_EhadCorr( std::string filename, bool isGas )
   cafMVA->Branch( "TotCorr", &TotCorr, "TotCorr/D" );
   cafMVA->Branch( "TotCorrCollar", &TotCorrCollar, "TotCorrCollar/D" );
 
+  cafMVA->Branch( "PrimEtrue", &PrimEtrue, "PrimEtrue[nFSP]/F" );
+  cafMVA->Branch( "PrimEreco", &PrimEreco, "PrimEreco[nFSP]/F" );
+  cafMVA->Branch( "PrimErecoCorr", &PrimErecoCorr, "PrimErecoCorr[nFSP]/F" );
+  cafMVA->Branch( "CorrPrimEreco", &CorrPrimEreco, "CorrPrimEreco[nFSP]/F" );
+
   if( isGas ) {
     cafMVA->Branch( "gastpc_pi_pl_mult", &gastpc_pi_pl_mult, "gastpc_pi_pl_mult/I" );
-    cafMVA->Branch( "gastpc_pi_min_mult", &gastpc_pi_min_mult, "gastpc_pi_min_mult/I" );
-    cafMVA->Branch( "nFSP", &nFSP, "nFSP/I" );
-    cafMVA->Branch( "pdg", pdg, "pdg[nFSP]/I" );    
+    cafMVA->Branch( "gastpc_pi_min_mult", &gastpc_pi_min_mult, "gastpc_pi_min_mult/I" );   
     cafMVA->Branch( "ptrue", ptrue, "ptrue[nFSP]/D" );    
     cafMVA->Branch( "trkLen", trkLen, "trkLen[nFSP]/D" );    
     cafMVA->Branch( "trkLenPerp", trkLenPerp, "trkLenPerp[nFSP]/D" );    
@@ -180,9 +194,10 @@ void CAF_EhadCorr::setToBS()
   eP = 0.; eN = 0.; ePip = 0.; ePim = 0.; ePi0 = 0.; eOther = 0.;
   eRecoP = 0.; eRecoN = 0.; eRecoPip = 0.; eRecoPim = 0.; eRecoPi0 = 0.; eRecoOther = 0.;
   CorreRecoP = 0.; CorreRecoN = 0.; CorreRecoPip = 0.; CorreRecoPim = 0.; CorreRecoPi0 = 0.; CorreRecoOther = 0.;
+  CorrP = 0.; CorrN = 0.; CorrPip = 0.; CorrPim = 0.; CorrPi0 = 0.; CorrOther = 0.;
   vtx_x = -9999.; vtx_y = -9999.; vtx_z = -9999.;
   det_x = -9999.;
-  Ev_reco = 0.; CorrEv_reco = 0.; Elep_reco = 0.; theta_reco = 0.;
+  Ev_reco = 0.; CorrEv_reco = 0.; Elep_reco = 0.; Ehad_reco = 0.; CorrEhad_reco = 0.; theta_reco = 0.;
   reco_numu = 0; reco_nue = 0; reco_nc = 0; reco_q = 0;
   muon_contained = 0; muon_tracker = 0; muon_ecal = 0; muon_exit = 0; reco_lepton_pdg = 0;
   Ehad_veto = 0.; CorrEhad_veto = 0.;
@@ -209,6 +224,10 @@ void CAF_EhadCorr::setToBS()
     partEvReco[i] = 0.;
     ptrue[i] = 0.;
     pdg[i] = 0;
+    PrimEtrue[i] = 0.;
+	PrimEreco[i] = 0.;
+	PrimErecoCorr[i] = 0.;
+    CorrPrimEreco[i] = 0.;
   }
 }
 

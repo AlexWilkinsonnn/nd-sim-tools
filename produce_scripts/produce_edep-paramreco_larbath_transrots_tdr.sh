@@ -19,7 +19,7 @@ SAVE_GENIE=false
 SAVE_GTRAC=false
 SAVE_EDEP=false # edep-sim output
 SAVE_EDEP_MAKECAF=false # summarised edep-sim for parameterised reco in mackeCAF
-SAVE_CAF=false # currently parameterised reco caf
+SAVE_CAF=true # currently parameterised reco caf
 SAVE_NDFD_ROOT=false # nd and fd depo data after translation + rotation throws to select
 SAVE_PAIR_H5=true # nd-fd paired data file
 
@@ -206,13 +206,15 @@ export GDK2NUFLUXXML="${PWD}/GNuMIFlux.xml"
 echo "LS-ing inputs post edep-sim on ND, pre dumpTree on LAr"
 ls -lrth
 echo "Running makeCAF dumpTree"
-python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_larbath.${RNDSEED}.root \
+python dumpTree_EhadcorrNDLArOnly_trajfix_events_tdr_nogeoeff_larbath.py \
+										--infile_edepsim edep_larbath.${RNDSEED}.root \
                                         --edepsim_geometry edep_ND.${RNDSEED}.root \
                                         --outfile edep_dump_larbath_nd.${RNDSEED}.root
 
 echo "LS-ing inputs post dumpTree on LAr, pre dumpTree on ND"
 ls -lrth
-python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root \
+python dumpTree_EhadcorrNDLArOnly_trajfix_events_tdr_nogeoeff_larbath.py \
+										--infile_edepsim edep_ND.${RNDSEED}.root \
                                         --edepsim_geometry edep_ND.${RNDSEED}.root \
                                         --outfile edep_dump_ND_nd.${RNDSEED}.root
 
@@ -220,7 +222,7 @@ echo "LS-ing inputs post dumpTree on ND, pre makeCAF"
 ls -lrth
 echo "Running makeCAF"
 cd $ND_CAFMAKER_DIR
-./makeCAF_resim-muon --infile ../edep_dump_larbath_nd.${RNDSEED}.root \
+./makeCAF_resim-muon-EhadCorr --infile ../edep_dump_larbath_nd.${RNDSEED}.root \
 					 --infile_resim ../edep_dump_ND_nd.${RNDSEED}.root \
           			 --gfile ../${MODE}.${RNDSEED}.ghep.root \
           			 --outfile ../${HORN}.${RNDSEED}.nd.CAF.root \
@@ -232,52 +234,52 @@ cd ..
 echo "LS-ing inputs after makeCAF"
 ls -lrth
 # Reset env again for GeoEff rotations+translation
-echo "Resetting env with env.sh"
-unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
-source env.sh
-
-source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
-setup dunetpc v09_41_00_02 -q e20:prof
-setup ifdhc v2_6_6
-setup root v6_22_08d -q e20:p392:prof
-setup duneutil v09_65_01d00 -q e20:prof
-setup cmake v3_24_1
-setup gcc v6_4_0
-setup eigen v3_3_5
-setup geant4 v4_10_6_p01e -q e20:prof
-setup edepsim v3_2_0 -q e20:prof
-
-python -m venv .venv_3.9.2_ndfd_pairs
-source .venv_3.9.2_ndfd_pairs/bin/activate
-# scipy 1.10 is the latest version compatible with edep-sim's numpy version 1.20.1 which the
-# the venv cannot overwrite
-pip install torch scipy==1.10 h5py fire
-if [ "$INTERACTIVE" = true ]; then
-  export PYTHONPATH=${PWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
-  export LD_LIBRARY_PATH=${PWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
-else
-  export PYTHONPATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
-  export LD_LIBRARY_PATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
-fi
-
-echo "Running translation + rotation throws to get selected nd-fd pairs"
-mkdir n2fd_outputs
-cd ${TRANSROTS_DIR}/app
-python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
-                      --out_dir ../../n2fd_outputs \
-					  --caf_file ../../${HORN}.${RNDSEED}.nd.CAF.root \
-                      ../../edep_larbath.${RNDSEED}.root # 1> /dev/null 2/ /dev/null
-cd ../../
-
-echo "Running nd-fd pair maker"
-echo "LS-ing inputs post throws"
-ls -lrth
-echo "LS-ing n2fd_outputs/* post thtows"
-ls -lrth n2fd_outputs/*
-python dumpTree_larndsimv0_3_4_transrots-paramreco.py --param_reco_file ${HORN}.${RNDSEED}.nd.CAF.root \
-                                                      n2fd_outputs/root_out/n2fd_paired_out.root \
-                                                      ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
-
+#echo "Resetting env with env.sh"
+#unset $(comm -2 -3 <(printenv | sed 's/=.*//' | sort) <(sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
+#source env.sh
+#
+#source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
+#setup dunetpc v09_41_00_02 -q e20:prof
+#setup ifdhc v2_6_6
+#setup root v6_22_08d -q e20:p392:prof
+#setup duneutil v09_65_01d00 -q e20:prof
+#setup cmake v3_24_1
+#setup gcc v6_4_0
+#setup eigen v3_3_5
+#setup geant4 v4_10_6_p01e -q e20:prof
+#setup edepsim v3_2_0 -q e20:prof
+#
+#python -m venv .venv_3.9.2_ndfd_pairs
+#source .venv_3.9.2_ndfd_pairs/bin/activate
+## scipy 1.10 is the latest version compatible with edep-sim's numpy version 1.20.1 which the
+## the venv cannot overwrite
+#pip install torch scipy==1.10 h5py fire
+#if [ "$INTERACTIVE" = true ]; then
+#  export PYTHONPATH=${PWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
+#  export LD_LIBRARY_PATH=${PWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
+#else
+#  export PYTHONPATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
+#  export LD_LIBRARY_PATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
+#fi
+#
+#echo "Running translation + rotation throws to get selected nd-fd pairs"
+#mkdir n2fd_outputs
+#cd ${TRANSROTS_DIR}/app
+#python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
+#                      --out_dir ../../n2fd_outputs \
+#					  --caf_file ../../${HORN}.${RNDSEED}.nd.CAF.root \
+#                      ../../edep_larbath.${RNDSEED}.root # 1> /dev/null 2/ /dev/null
+#cd ../../
+#
+#echo "Running nd-fd pair maker"
+#echo "LS-ing inputs post throws"
+#ls -lrth
+#echo "LS-ing n2fd_outputs/* post thtows"
+#ls -lrth n2fd_outputs/*
+#python dumpTree_larndsimv0_3_4_transrots-paramreco.py --param_reco_file ${HORN}.${RNDSEED}.nd.CAF.root \
+#                                                      n2fd_outputs/root_out/n2fd_paired_out.root \
+#                                                      ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
+#
 echo "Copying files to dCache..."
 if [ "$SAVE_GENIE" = true ]; then
   ifdh cp ${MODE}.${RNDSEED}.ghep.root ${GENIE_OUTPATH}/${HORN}.${RNDSEED}.ghep.root
@@ -296,9 +298,9 @@ fi
 if [ "$SAVE_CAF" = true ]; then
   ifdh cp ${HORN}.${RNDSEED}.nd.CAF.root ${CAF_OUTPATH}/${HORN}.${RNDSEED}.nd.CAF.root
 fi
-if [ "$SAVE_NDFD_ROOT" = true ]; then
-  ifdh cp n2fd_outputs/root_out/n2fd_paired_out.root ${NDFD_ROOT_OUTPUT}/${HORN}.${RNDSEED}.n2fd_paired_out.root
-fi
-if [ "$SAVE_PAIR_H5" = true ]; then
-  ifdh cp ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5 ${PAIR_H5_OUTPUT}/${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
-fi
+#if [ "$SAVE_NDFD_ROOT" = true ]; then
+#  ifdh cp n2fd_outputs/root_out/n2fd_paired_out.root ${NDFD_ROOT_OUTPUT}/${HORN}.${RNDSEED}.n2fd_paired_out.root
+#fi
+#if [ "$SAVE_PAIR_H5" = true ]; then
+#  ifdh cp ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5 ${PAIR_H5_OUTPUT}/${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
+#fi
