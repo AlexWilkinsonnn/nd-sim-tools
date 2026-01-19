@@ -9,11 +9,11 @@
 ################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/genie"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/edep"
-CAF_OUTPATH="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/caf"
-NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/pair_root"
-PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/awilkins/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/caf"
+NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/pair_root"
+PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
 
 SAVE_GENIE=false
 SAVE_EDEP=false # edep-sim output
@@ -150,10 +150,18 @@ echo "NPER=${NPER}"
 
 setup edepsim v3_0_0 -q e19:prof
 
+# We run edepsim once for each detector
+
 echo "Running edepsim"
 edep-sim -C \
          -g ${GEOMETRY_LARBATH} \
          -o edep_larbath.${RNDSEED}.root \
+         -e ${NPER} \
+         $EDEP_MAC
+
+edep-sim -C \
+         -g ${GEOMETRY_ND} \
+         -o edep_ND.${RNDSEED}.root \
          -e ${NPER} \
          $EDEP_MAC
 
@@ -170,8 +178,8 @@ export GXMLPATH=${PWD}:${GXMLPATH}
 export GNUMIXML="GNuMIFlux.xml"
 
 echo "Running makeCAF dumpTree"
-python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_larbath.${RNDSEED}.root \
-                                        --edepsim_geometry ${GEOMETRY_ND_DUMMY_EDEP} \
+python dumpTree_tdr_nogeoeff_larbath.py --infile_edepsim edep_ND.${RNDSEED}.root \
+                                        --edepsim_geometry edep_ND.${RNDSEED}.root \
                                         --outfile edep_dump_larbath_nd.${RNDSEED}.root \
 
 echo "Running makeCAF"
