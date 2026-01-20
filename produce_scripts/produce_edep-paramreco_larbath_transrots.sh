@@ -156,11 +156,7 @@ edep-sim -C \
          -o edep_larbath.${RNDSEED}.root \
          -e ${NPER} \
          $EDEP_MAC
-edep-sim -C \
-         -g ${GEOMETRY_ND} \
-         -o edep_nd.${RNDSEED}.root \
-         -e ${NPER} \
-         $EDEP_MAC
+
 
 # Want to rollback environment to use old ND_CAFMaker scripts
 # Unset all new env vars and then source the old env - probably overkill but it works
