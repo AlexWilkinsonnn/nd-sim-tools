@@ -211,6 +211,7 @@ setup eigen v3_3_5
 setup geant4 v4_10_6_p01e -q e20:prof
 setup edepsim v3_2_0 -q e20:prof
 
+source .venv_3.9.2_ndfd_pairs/bin/activate
 if [ "$INTERACTIVE" = true ]; then
   export PYTHONPATH=${PWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
   export LD_LIBRARY_PATH=${PWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
