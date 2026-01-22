@@ -28,8 +28,9 @@ parser.add_argument("--config", type=str, default="UserConfig.py")
 parser.add_argument(
     "--out_dir", type=str, default="/dune/app/users/weishi/testn2fd/DUNE_ND_GeoEff/app/output"
 )
+parser.add_argument("--caf_file", type=str)
 args = parser.parse_args()
-a, config_file, out_path = args.input, args.config, args.out_dir
+a, config_file, out_path, caf = args.input, args.config, args.out_dir, args.caf_file
 
 with open(config_file) as infile:
     exec(infile.read())
@@ -45,6 +46,15 @@ if not edep_file:
     sys.exit()
 inputTree = edep_file.Get("EDepSimEvents")
 genieTree = edep_file.Get("DetSimPassThru/gRooTracker")
+
+caf_file = TFile(caf, "READ")
+if not caf_file:
+    print("Error: cound not open file", caf)
+    sys.exit()
+cafTree = caf_file.Get("caf")
+passed_event_IDs = []
+for event in cafTree:
+    passed_event_IDs.append(event.event)
 
 event = TG4Event()
 inputTree.SetBranchAddress("Event", event)
@@ -206,6 +216,8 @@ myEvents.Branch('nd_fd_throws_passed', nd_fd_throws_passed, 'nd_fd_throws_passed
 ##########################
 
 for jentry in range(entries):
+    if jentry not in passed_event_IDs:
+        continue
     print("jentry = " + str(jentry))
     nb = inputTree.GetEntry(jentry)
     gb = genieTree.GetEntry(jentry)

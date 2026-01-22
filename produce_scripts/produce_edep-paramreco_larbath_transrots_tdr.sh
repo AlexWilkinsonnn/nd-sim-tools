@@ -225,6 +225,7 @@ mkdir n2fd_outputs
 cd ${TRANSROTS_DIR}/app
 python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
                       --out_dir ../../n2fd_outputs \
+					  --caf_file ../../${HORN}.${RNDSEED}.nd.CAF.root \
                       ../../edep_larbath.${RNDSEED}.root # 1> /dev/null 2/ /dev/null
 cd ../../
 
