@@ -9,11 +9,11 @@
 ################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/genie"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/edep"
-CAF_OUTPATH="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/caf"
-NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/pair_root"
-PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/${USER}/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/caf"
+NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_root"
+PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
 
 SAVE_GENIE=false
 SAVE_EDEP=false # edep-sim output
