@@ -598,7 +598,7 @@ int main( int argc, char const *argv[] )
   caf.write();
 
   // Store edep-sim event IDS also because I am scared
-  TTree *tEventId = new TTree("eventid", "eventid");
+/* TTree *tEventId = new TTree("eventid", "eventid");
   int evidOut;
   tEventId->Branch("eventID", &evidOut, "eventId/I");
   int evidIn;
@@ -609,5 +609,5 @@ int main( int argc, char const *argv[] )
     evidOut = evidIn;
     tEventId->Fill();
   }
-  tEventId->Write();
+  tEventId->Write();*/
 }
