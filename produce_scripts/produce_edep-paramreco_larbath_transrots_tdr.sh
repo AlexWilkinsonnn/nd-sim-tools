@@ -9,11 +9,11 @@
 ################################################################################
 # Options
 
-GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/genie"
-EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/edep"
-CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/caf"
-NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_root"
-PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/pair_allinfo_h5"
+GENIE_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/genie"
+EDEP_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/edep"
+CAF_OUTPATH="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/caf"
+NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/pair_root"
+PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/pair_allinfo_h5"
 
 SAVE_GENIE=false
 SAVE_EDEP=false # edep-sim output
@@ -26,6 +26,7 @@ SAVE_PAIR_H5=true # nd-fd paired data file
 INPUTS_DIR="sim_inputs_larbath_selected_ndfd_pairs"
 ND_CAFMAKER_DIR="ND_CAFMaker"
 TRANSROTS_DIR="DUNE_ND_GeoEff"
+VENV_DIR=".venv_3.9.2_ndfd_pairs"
 
 GEOMETRY_LARBATH="LArBath_ndtopvol.gdml"
 GEOMETRY_ND="MPD_SPY_LAr.gdml"
@@ -59,6 +60,7 @@ else
   cp -r ${INPUT_TAR_DIR_LOCAL}/${INPUTS_DIR} .
   cp -r ${INPUT_TAR_DIR_LOCAL}/${ND_CAFMAKER_DIR} .
   cp -r ${INPUT_TAR_DIR_LOCAL}/${TRANSROTS_DIR} .
+  cp -r ${INPUT_TAR_DIR_LOCAL}/${VENV_DIR} .
 fi
 
 RUNNO=$((${PROCESS}+${FIRST}))
@@ -68,7 +70,7 @@ RNDSEED=`echo "$RNDSEED" | cut -f 1 -d '.'`
 NEVENTS="-e ${NPOT}"
 
 cp ${INPUTS_DIR}/* .
-ls
+ls -a
 
 # Don't try over and over again to copy a file when it isn't going to work
 export IFDH_CP_UNLINK_ON_ERROR=1
@@ -192,6 +194,7 @@ cd $ND_CAFMAKER_DIR
           ${RHC} \
           --oa ${OFFAXIS}
 cd ..
+pwd
 
 # Reset env again for GeoEff rotations+translation
 echo "Resetting env with env.sh"
@@ -199,6 +202,7 @@ unset $(comm -2 -3 <(\
         printenv | sed 's/=.*//' | sort) <(\
         sed -e 's/=.*//' -e 's/declare -x //' env.sh | sort))
 source env.sh
+pwd
 
 source /cvmfs/dune.opensciencegrid.org/products/dune/setup_dune.sh
 setup dunetpc v09_41_00_02 -q e20:prof
@@ -216,9 +220,15 @@ if [ "$INTERACTIVE" = true ]; then
   export PYTHONPATH=${PWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
   export LD_LIBRARY_PATH=${PWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
 else
-  export PYTHONPATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${PYTHONPATH}
+  export PYTHONPATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${_CONDOR_JOB_IWD}/${VENV_DIR}/lib/python3.9/site-packages:${PYTHONPATH}
   export LD_LIBRARY_PATH=${_CONDOR_JOB_IWD}/${TRANSROTS_DIR}/lib:${LD_LIBRARY_PATH}
 fi
+
+echo "Listing available python packages..."
+pip list
+
+echo "PYTHONPATH=${PYTHONPATH}"
+echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
 
 echo "Running translation + rotation throws to get selected nd-fd pairs"
 mkdir n2fd_outputs
@@ -227,11 +237,13 @@ python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
                       --out_dir ../../n2fd_outputs \
 					  --caf_file ../../${HORN}.${RNDSEED}.nd.CAF.root \
                       ../../edep_larbath.${RNDSEED}.root # 1> /dev/null 2/ /dev/null
-cd ../../
+echo "LS-ing n2fd_outputs following Edepsim_ana.py..."
+cd ../../n2fd_outputs
+ls -lrth ./*
+cd ../
 
 echo "Running nd-fd pair maker"
 ls -lrth
-ls -lrth n2fd_outputs/*
 python dumpTree_larndsimv0_3_4_transrots-paramreco.py --param_reco_file ${HORN}.${RNDSEED}.nd.CAF.root \
                                                       n2fd_outputs/root_out/n2fd_paired_out.root \
                                                       ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
