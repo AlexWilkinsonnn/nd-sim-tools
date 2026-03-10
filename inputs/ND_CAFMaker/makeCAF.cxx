@@ -488,9 +488,10 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         }
       }
     }
-	if((caf.vtx_x < 310.) && (caf.vtx_x > -310.) && (caf.vtx_y < 550.) && (caf.vtx_y > -550.) && (caf.vtx_z < 1244.) && (caf.vtx_z > 50.) && ((caf.muon_tracker == 1) || (caf.muon_contained == 1)) && (caf.reco_numu == 1) && (((caf.reco_q == -1) && (caf.neutrinoPDG > 0)) || ((caf.reco_q == 1) && (caf.neutrinoPDG < 0))) && (caf.Ehad_veto < 30.)) {
+/*	if((caf.vtx_x < 310.) && (caf.vtx_x > -310.) && (caf.vtx_y < 550.) && (caf.vtx_y > -550.) && (caf.vtx_z < 1244.) && (caf.vtx_z > 50.) && ((caf.muon_tracker == 1) || (caf.muon_contained == 1)) && (caf.reco_numu == 1) && (((caf.reco_q == -1) && (caf.neutrinoPDG > 0)) || ((caf.reco_q == 1) && (caf.neutrinoPDG < 0))) && (caf.Ehad_veto < 30.)) {
         caf.fill();
-	}
+	}*/
+	caf.fill();
   }
 
   // set POT
