@@ -440,11 +440,11 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         caf.fsPx[i] = fsPx[i]*0.001;
         caf.fsPy[i] = fsPy[i]*0.001;
         caf.fsPz[i] = fsPz[i]*0.001;
-        caf.fsTrkLen[i] = fsTrkLen[i];
-        caf.fsTrkFrontdEdX[i] = fsTrkFrontdEdX[i];
-        caf.fsTrkEnddEdX[i] = fsTrkEnddEdX[i];
-        caf.fsTrkEndpointBall[i] = fsTrkEndpointBall[i];
-        caf.fsTrkCalo[i] = fsTrkCalo[i];
+        caf.fsTrkLen[i] = fsTrkLen[i]; // cm
+        caf.fsTrkFrontdEdX[i] = fsTrkFrontdEdX[i]*0.001;
+        caf.fsTrkEnddEdX[i] = fsTrkEnddEdX[i]*0.001;
+        caf.fsTrkEndpointBall[i] = fsTrkEndpointBall[i]*0.001;
+        caf.fsTrkCalo[i] = fsTrkCalo[i]*0.001;
       }
 
       caf.pileup_energy = 0.;
