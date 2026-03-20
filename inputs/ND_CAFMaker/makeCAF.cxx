@@ -187,6 +187,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   float p3lep[3], vtx[3], muonExitPt[3], muonExitMom[3];
   int fsPdg[100];
   float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsTrkLen[100], fsTrkLenPerp[100];
+  float fsTrkFrontdEdX[100], fsTrkEnddEdX[100], fsTrkEndpointBall[100], fsTrkCalo[100];
   tree->SetBranchAddress( "ievt", &ievt );
   tree->SetBranchAddress( "lepPdg", &lepPdg );
   tree->SetBranchAddress( "muonReco", &muonReco );
@@ -214,8 +215,11 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "fsPz", fsPz );
   tree->SetBranchAddress( "fsE", fsE );
   tree->SetBranchAddress( "fsTrkLen", fsTrkLen );
+  tree->SetBranchAddress( "fsTrkFrontdEdX", fsTrkFrontdEdX );
+  tree->SetBranchAddress( "fsTrkEnddEdX", fsTrkEnddEdX );
+  tree->SetBranchAddress( "fsTrkEndpointBall", fsTrkEndpointBall );
+  tree->SetBranchAddress( "fsTrkCalo", fsTrkCalo );
   tree->SetBranchAddress( "fsTrkLenPerp", fsTrkLenPerp );
-
   tree->SetBranchAddress( "geoEffThrowResults", &caf.geoEffThrowResults );
 
   caf.pot = gtree->GetWeight();
@@ -420,6 +424,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
 
       // Hadronic energy calorimetrically
       caf.Ev_reco = caf.Elep_reco + hadTot*0.001;
+      caf.nFSP = nFS;
       caf.Ehad_veto = hadCollar;
       caf.eRecoP = hadP*0.001;
       caf.eRecoN = hadN*0.001;
@@ -427,6 +432,20 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
       caf.eRecoPim = hadPim*0.001;
       caf.eRecoPi0 = hadPi0*0.001;
       caf.eRecoOther = hadOther*0.001;
+
+      // Hadronic system reconstruction
+      for(int i = 0; i < nFS; i++) {
+        caf.fsPdg[i] = fsPdg[i];
+        caf.fsE[i] = fsE[i]*0.001;
+        caf.fsPx[i] = fsPx[i]*0.001;
+        caf.fsPy[i] = fsPy[i]*0.001;
+        caf.fsPz[i] = fsPz[i]*0.001;
+        caf.fsTrkLen[i] = fsTrkLen[i];
+        caf.fsTrkFrontdEdX[i] = fsTrkFrontdEdX[i];
+        caf.fsTrkEnddEdX[i] = fsTrkEnddEdX[i];
+        caf.fsTrkEndpointBall[i] = fsTrkEndpointBall[i];
+        caf.fsTrkCalo[i] = fsTrkCalo[i];
+      }
 
       caf.pileup_energy = 0.;
       if( rando->Rndm() < par.pileup_frac ) caf.pileup_energy = rando->Rndm() * par.pileup_max;
@@ -488,10 +507,9 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         }
       }
     }
-/*	if((caf.vtx_x < 310.) && (caf.vtx_x > -310.) && (caf.vtx_y < 550.) && (caf.vtx_y > -550.) && (caf.vtx_z < 1244.) && (caf.vtx_z > 50.) && ((caf.muon_tracker == 1) || (caf.muon_contained == 1)) && (caf.reco_numu == 1) && (((caf.reco_q == -1) && (caf.neutrinoPDG > 0)) || ((caf.reco_q == 1) && (caf.neutrinoPDG < 0))) && (caf.Ehad_veto < 30.)) {
+	if((caf.vtx_x < 310.) && (caf.vtx_x > -310.) && (caf.vtx_y < 550.) && (caf.vtx_y > -550.) && (caf.vtx_z < 1244.) && (caf.vtx_z > 50.) && ((caf.muon_tracker == 1) || (caf.muon_contained == 1)) && (caf.reco_numu == 1) && (((caf.reco_q == -1) && (caf.neutrinoPDG > 0)) || ((caf.reco_q == 1) && (caf.neutrinoPDG < 0))) && (caf.Ehad_veto < 30.)) {
         caf.fill();
-	}*/
-	caf.fill();
+	}
   }
 
   // set POT

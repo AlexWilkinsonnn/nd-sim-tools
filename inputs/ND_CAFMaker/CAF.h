@@ -27,9 +27,14 @@ public:
   int isCC, neutrinoPDG, neutrinoPDGunosc, mode, LepPDG; 
   double Ev, Q2, W, X, Y, NuMomX, NuMomY, NuMomZ, LepMomX, LepMomY, LepMomZ, LepE, LepNuAngle;
   // True particle counts
+  int nFSP;
   int nP, nN, nipip, nipim, nipi0, nikp, nikm, nik0, niem, niother, nNucleus, nUNKNOWN;
   double eP, eN, ePip, ePim, ePi0, eOther;
   double eRecoP, eRecoN, eRecoPip, eRecoPim, eRecoPi0, eRecoOther;
+  int fsPdg[100];
+  double fsPx[100], fsPy[100], fsPz[100], fsE[100];
+  double fsTrkLen[100], fsTrkFrontdEdX[100], fsTrkEnddEdX[100];
+  double fsTrkEndpointBall[100], fsTrkCalo[100];
 
   // vertex -- smear it?
   double vtx_x, vtx_y, vtx_z;
@@ -46,7 +51,6 @@ public:
 
   // Gas TPC variables
   int gastpc_pi_min_mult, gastpc_pi_pl_mult;
-  int nFSP;
   int pdg[100];
   double trkLen[100], trkLenPerp[100], ptrue[100], partEvReco[100];
 

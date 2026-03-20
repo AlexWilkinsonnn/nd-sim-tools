@@ -44,6 +44,7 @@ CAF::CAF( std::string filename, bool isGas )
   cafMVA->Branch( "X", &X, "X/D" );
   cafMVA->Branch( "Y", &Y, "Y/D" );
 
+  cafMVA->Branch( "nFSP", &nFSP, "nFSP/I" );
   cafMVA->Branch( "nP", &nP, "nP/I" );
   cafMVA->Branch( "nN", &nN, "nN/I" );
   cafMVA->Branch( "nipip", &nipip, "nipip/I" );
@@ -69,6 +70,17 @@ CAF::CAF( std::string filename, bool isGas )
   cafMVA->Branch("eRecoPim",      &eRecoPim,       "eRecoPim/D");
   cafMVA->Branch("eRecoPi0",      &eRecoPi0,       "eRecoPi0/D");
   cafMVA->Branch("eRecoOther",    &eRecoOther,     "eRecoOther/D");
+  cafMVA->Branch("fsPdg",		&fsPdg,		"fsPdg[nFSP]/I");
+  cafMVA->Branch("fsPx",		&fsPx,		"fsPx[nFSP]/D");
+  cafMVA->Branch("fsPy",		&fsPy,		"fsPy[nFSP]/D");
+  cafMVA->Branch("fsPz",		&fsPz,		"fsPz[nFSP]/D");
+  cafMVA->Branch("fsE",			&fsE,		"fsE[nFSP]/D");
+
+  cafMVA->Branch("fsTrkLen",	&fsTrkLen,	"fsTrkLen[nFSP]/D");
+  cafMVA->Branch("fsTrkFrontdEdX",&fsTrkFrontdEdX,"fsTrkFrontdEdX[nFSP]/D");
+  cafMVA->Branch("fsTrkEnddEdX", &fsTrkEnddEdX,	"fsTrkEnddEdX[nFSP]/D");
+  cafMVA->Branch("fsTrkEndpointBall",&fsTrkEndpointBall,"fsTrkEndpointBall[nFSP]/D");
+  cafMVA->Branch("fsTrkCalo",	&fsTrkCalo,	"fsTrkCalo[nFSP]/D");
 
   cafMVA->Branch( "det_x", &det_x, "det_x/D" );
   cafMVA->Branch( "vtx_x", &vtx_x, "vtx_x/D" );
@@ -95,7 +107,6 @@ CAF::CAF( std::string filename, bool isGas )
   if( isGas ) {
     cafMVA->Branch( "gastpc_pi_pl_mult", &gastpc_pi_pl_mult, "gastpc_pi_pl_mult/I" );
     cafMVA->Branch( "gastpc_pi_min_mult", &gastpc_pi_min_mult, "gastpc_pi_min_mult/I" );
-    cafMVA->Branch( "nFSP", &nFSP, "nFSP/I" );
     cafMVA->Branch( "pdg", pdg, "pdg[nFSP]/I" );    
     cafMVA->Branch( "ptrue", ptrue, "ptrue[nFSP]/D" );    
     cafMVA->Branch( "trkLen", trkLen, "trkLen[nFSP]/D" );    
@@ -179,6 +190,19 @@ void CAF::setToBS()
   gastpc_pi_pl_mult = 0;
   gastpc_pi_min_mult = 0;
   nFSP = 0;
+
+  for(int i = 0; i < 100; ++i) {
+    fsPdg[i] = 0;
+    fsPx[i] = 0.;
+    fsPy[i] = 0.;
+    fsPz[i] = 0.;
+    fsE[i] = 0.;
+    fsTrkLen[i] = 0.;
+    fsTrkFrontdEdX[i] = 0.;
+    fsTrkEnddEdX[i] = 0.;
+    fsTrkEndpointBall[i] = 0.;
+    fsTrkCalo[i] = 0.;
+  }
 
   vtxInGap = -1; hadEFracInGap = -1.; lepEFracInGap = -1.;
 

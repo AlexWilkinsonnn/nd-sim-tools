@@ -66,13 +66,13 @@ def loop( evt, tgeo, tout ):
 
     N = events.GetEntries()
 
-    print "Starting loop over %d entries" % N
+    print ("Starting loop over %d entries" % N)
     ient = 0 # This is unnecessary
     iwritten = 0
     for ient in range(N):
 
         if ient % 100 == 0:
-            print "Event %d of %d..." % (ient,N)
+            print ("Event %d of %d..." % (ient,N))
         events.GetEntry(ient)
 
         t_eventID[0] = -1;
@@ -377,7 +377,7 @@ def loop( evt, tgeo, tout ):
                 if t_fsGamma1[mom] == 0.: t_fsGamma1[mom] = gamma_energy[t]
                 elif t_fsGamma2[mom] == 0.: t_fsGamma2[mom] = gamma_energy[t]
                 else:
-                    print "Pi0 has more than two photons wtf"
+                    print ("Pi0 has more than two photons wtf\n")
 
 
             tout.Fill()

@@ -42,6 +42,7 @@ paramreco_dtype = np.dtype([("eventID", "u4"), ("cafTree_event", "u4"),
                             ("LepMomX", "f4"), ("LepMomY", "f4"), ("LepMomZ", "f4"),
                             ("LepE", "f4"), ("LepNuAngle", "f4"),
                             ("Q2", "f4"), ("W", "f4"), ("X", "f4"), ("Y", "f4"),
+                            ("nFSP", "u4"),
                             ("nP", "u4"), ("nN", "u4"),
                             ("nipip", "u4"), ("nipim", "u4"), ("nipi0", "u4"),
                             ("nikp", "u4"), ("nikm", "u4"), ("nik0", "u4"),
@@ -65,6 +66,20 @@ paramreco_dtype = np.dtype([("eventID", "u4"), ("cafTree_event", "u4"),
                             ("muon_endpoint_z", "f4"),
                             ("Ehad_veto", "f4")])
 
+paramreco_part_dtype = np.dtype([("eventID", "u4"), ("partID", "u4"),
+                                ("RecoPdg", "i4"),
+                                ("RecoE", "f4"), ("RecoPx", "f4"), ("RecoPy", "f4"), ("RecoPz", "f4"),
+                                ("RecoTrkLen", "f4"), ("RecoTrkFrontdEdX", "f4"), ("RecoTrkEnddEdX", "f4"),
+                                ("RecoTrkEndpointBall", "f4"), ("RecoTrkCalo", "f4")])
+
+paramreco_part_dtype = np.dtype([("eventID", "u4"), ("partID", "u4"),
+                                ("RecoPdg", "u4"),
+                                ("RecoE", "f4"), ("RecoPx", "f4"), ("RecoPy", "f4"), ("RecoPz", "f4"),
+                                ("RecoTrkLen", "f4"),
+                                ("RecoTrkFrontdEdX", "f4"), ("RecoTrkEnddEdX", "f4"),
+                                ("RecoTrkEndpointBall", "f4"),
+                                ("RecoTrkCalo", "f4")])
+
 primaries_dtype = np.dtype([("eventID", "u4"),
                             ("pdg", "u4"),
                             ("p0_MeV", "f4"), ("p1_MeV", "f4"), ("p2_MeV", "f4"), ("p3_MeV", "f4")])
@@ -84,16 +99,17 @@ def initHDF5File(output_file, paramreco):
         f.create_dataset('fd_vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
         if paramreco:
             f.create_dataset('nd_paramreco', (0,), dtype=paramreco_dtype, maxshape=(None,))
+            f.create_dataset('nd_paramreco_part', (0,), dtype=paramreco_part_dtype, maxshape=(None,))
         f.create_dataset('primaries', (0,), dtype=primaries_dtype, maxshape=(None,))
         f.create_dataset('lepton', (0,), dtype=lepton_dtype, maxshape=(None,))
 
 # Resize HDF5 file and save output arrays
 def updateHDF5File(
-    output_file, segments, vertices, fd_deps, fd_vertices, nd_paramreco, primaries, lepton
+    output_file, segments, vertices, fd_deps, fd_vertices, nd_paramreco, nd_paramreco_part, primaries, lepton
 ):
     if any([
         len(segments), len(vertices), len(fd_deps), len(fd_vertices), len(nd_paramreco),
-        len(primaries), len(lepton)
+        len(nd_paramreco_part), len(primaries), len(lepton)
     ]):
         with h5py.File(output_file, 'a') as f:
             if len(segments):
@@ -120,6 +136,11 @@ def updateHDF5File(
                 nprec = len(f['nd_paramreco'])
                 f['nd_paramreco'].resize((nvert+len(nd_paramreco),))
                 f['nd_paramreco'][nprec:] = nd_paramreco
+                
+            if len(nd_paramreco_part):
+                nprec_part = len(f['nd_paramreco_part'])
+                f['nd_paramreco_part'].resize((nvert+len(nd_paramreco_part),))
+                f['nd_paramreco_part'][nprec_part:] = nd_paramreco_part
 
             if len(primaries):
                 nprim = len(f['primaries'])
@@ -159,6 +180,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
     vertices_list = list()
     fd_vertices_list = list()
     param_reco_list = list()
+    param_reco_part_list = list()
     primaries_list = list()
     lepton_list = list()
 
@@ -355,6 +377,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
             prec["W"] = prec_event.W
             prec["X"] = prec_event.X
             prec["Y"] = prec_event.Y
+            prec["nFSP"] = prec_event.nFSP
             prec["nP"] = prec_event.nP
             prec["nN"] = prec_event.nN
             prec["nipip"] = prec_event.nipip
@@ -400,6 +423,32 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
             prec["muon_endpoint_z"] = prec_event.muon_endpoint[2]
             prec["Ehad_veto"] = prec_event.Ehad_veto
             param_reco_list.append(prec)
+            
+        # Save the individual particles' reco quantities if param reco provided
+        if param_reco_file is not None:
+            reco_primaries = np.empty(prec_event.nFSP, dtype=paramreco_part_dtype)            
+            for i_prim, (pdg, E, px, py, pz, trkLen, trkFrontdEdX, trkEnddEdX, 
+                trkEndpointBall, trkCalo) in enumerate(
+                zip(
+                    prec_event.fsPdg, 
+                    prec_event.fsE, prec_event.fsPx, prec_event.fsPy, prec_event.fsPz,
+                    prec_event.fsTrkLen, prec_event.fsTrkFrontdEdX, prec_event.fsTrkEnddEdX, 
+                    prec_event.fsTrkEndpointBall, prec_event.fsTrkCalo
+                )
+            ):
+                reco_primaries[i_prim]["eventID"] = i_event
+                reco_primaries[i_prim]["partID"] = i_prim
+                reco_primaries[i_prim]["RecoPdg"] = pdg
+                reco_primaries[i_prim]["RecoE"] = E
+                reco_primaries[i_prim]["RecoPx"] = px
+                reco_primaries[i_prim]["RecoPy"] = py
+                reco_primaries[i_prim]["RecoPz"] = pz
+                reco_primaries[i_prim]["RecoTrkLen"] = trkLen
+                reco_primaries[i_prim]["RecoTrkFrontdEdX"] = trkFrontdEdX
+                reco_primaries[i_prim]["RecoTrkEnddEdX"] = trkEnddEdX
+                reco_primaries[i_prim]["RecoTrkEndpointBall"] = trkEndpointBall
+                reco_primaries[i_prim]["RecoTrkCalo"] = trkCalo
+            param_reco_part_list.append(reco_primaries)
 
     # save any lingering data not written to file
     updateHDF5File(
@@ -409,6 +458,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
         np.concatenate(fd_depos_list, axis=0) if fd_depos_list else np.empty((0,)),
         np.concatenate(fd_vertices_list, axis=0) if fd_vertices_list else np.empty((0,)),
         np.concatenate(param_reco_list, axis=0) if param_reco_list else np.empty((0,)),
+        np.concatenate(param_reco_part_list, axis=0) if param_reco_part_list else np.empty((0,)),
         np.concatenate(primaries_list, axis=0) if primaries_list else np.empty((0,)),
         np.concatenate(lepton_list, axis=0) if lepton_list else np.empty((0,)))
 
