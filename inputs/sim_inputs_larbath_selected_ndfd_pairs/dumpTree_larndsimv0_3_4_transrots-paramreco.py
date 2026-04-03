@@ -72,14 +72,6 @@ paramreco_part_dtype = np.dtype([("eventID", "u4"), ("partID", "u4"),
                                 ("RecoTrkLen", "f4"), ("RecoTrkFrontdEdX", "f4"), ("RecoTrkEnddEdX", "f4"),
                                 ("RecoTrkEndpointBall", "f4"), ("RecoTrkCalo", "f4")])
 
-paramreco_part_dtype = np.dtype([("eventID", "u4"), ("partID", "u4"),
-                                ("RecoPdg", "u4"),
-                                ("RecoE", "f4"), ("RecoPx", "f4"), ("RecoPy", "f4"), ("RecoPz", "f4"),
-                                ("RecoTrkLen", "f4"),
-                                ("RecoTrkFrontdEdX", "f4"), ("RecoTrkEnddEdX", "f4"),
-                                ("RecoTrkEndpointBall", "f4"),
-                                ("RecoTrkCalo", "f4")])
-
 primaries_dtype = np.dtype([("eventID", "u4"),
                             ("pdg", "u4"),
                             ("p0_MeV", "f4"), ("p1_MeV", "f4"), ("p2_MeV", "f4"), ("p3_MeV", "f4")])

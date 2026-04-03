@@ -252,8 +252,12 @@ def loop( evt, tgeo, tout ):
 
             # hadronic containment -- find hits in ArgonCube
             hits = []
+            # For each detector volume that has hits:
             for key in event.SegmentDetectors:
+                # For each hit in that volume:
                 for hit in key.second:
+                    # Find the midpoint and the volume it's in.
+                    # Check that it's a valid volume
                     hMid = ROOT.TVector3(
                         (hit.Start[0] + hit.Stop[0])/2,
                         (hit.Start[1] + hit.Stop[1])/2,
@@ -262,69 +266,153 @@ def loop( evt, tgeo, tout ):
                     node = tgeo.FindNode(hMid.X(), hMid.Y(), hMid.Z())
                     if not node:
                         continue
+                    # If it's a valid volume and it's in the active LAr region, save it
                     volName = node.GetName()
                     if ("_").join(volName.split("_")[:-2]) == "volLArActive":
                         hits.append(hit)
 
             # Truth-matching energy -- make dictionary of trajectory --> primary pdg
+            # We want to associate all of te energy from simulated
+            # particles in GEANT (trajectories) to the ultimate parent
+            # particle, that is, the primary particle from whence that 
+            # energy came.
+            
+            # Make dicrionaries of trajectory --> primary pdg
             traj_to_pdg = {}
-            # For pi0s, stop at the photons to determine the visible energy due to gamma1/gamma2
+            # For pi0s, stop at the photons to determine the visible 
+            # energy due to gamma1/gamma2. To do this, make a dictionary 
+            # where the keys are the track IDs of particles that came from 
+            # a pi0 gamma, and the values are the trackIDs of the gammas 
+            # that correspond to the trackID key. The list is to record
+            # the trackIDs of the gammas forming from a primary pi0.
             tid_to_gamma = {}
             gamma_tids = []
+            # For each trajectory (aka particle in GEANT):
             for traj in event.Trajectories:
+                # Mom is the track ID for the trajectory that came right
+                # before the trajectory in question. If it's a primary 
+                # particle, the value is -1.
                 mom = traj.ParentId
+                # Each particle has a unique track ID.
                 tid = traj.TrackId
+                # The first n trajectories are the initial trajectories 
+                # for the n primary particles in an event. The next line 
+                # therefore considers if the trajectories in question are 
+                # gammas from a primary pi0.
                 if event.Trajectories[mom].PDGCode == 111 and event.Trajectories[tid].PDGCode == 22 and event.Trajectories[mom].ParentId == -1:
+                    # If yes, then append the trajectory's trackID to the 
+                    # list of gamma trackIDs.
                     gamma_tids.append(tid)
+                # If we are not looking at a primary, we want to know the 
+                # primary PDG that led to that trajectory. This block 
+                # walks back through the chain of trajectories to get that 
+                # info. If the trajectory in question is not a primary:
                 while mom != -1:
+                    # The next trackId to consider is the mother of the
+                    # current one.
                     tid = mom
+                    # The next mother to consider is the parentID of the 
+                    # current mother.
                     mom = event.Trajectories[mom].ParentId
+                    # If the next mother to consider is one of the gammas 
+                    # from a primary pi0:
                     if mom in gamma_tids:
+                        # This is a particle that is directly due to a 
+                        # gamma from a pi0, so add it to the dictionary.
                         tid_to_gamma[tid] = mom
+                # We now have a trah, and the trackID (tid) of its 
+                # ultimate mother. Record the PDG in the dictionary and 
+                # set the energy counter for that trajectory to 0.0
                 traj_to_pdg[traj] = event.Trajectories[tid].PDGCode
 
+            # Initialize collar energy, as it will be handled like a 
+            # trajectory
             collar_energy = 0.
             total_energy = 0.
 
+            # Each of these lists has one entry per primary particle
             track_length = [0. for i in range(nfsp)]
             dEdX = [[] for i in range(nfsp)]
             this_step = [[0.,0.] for i in range(nfsp)]
             end_point = [None for i in range(nfsp)]
             int_energy = [0. for i in range(nfsp)]
             trk_calo = [0. for i in range(nfsp)]
+            
+            # The dictionary gamma energy is for keeping the energy 
+            # associated with each gamma from a primary pi0 separate from 
+            # each other
             gamma_energy = {}
             for g in gamma_tids:
                 gamma_energy[g] = 0.
+            
+            # Loop over the hits and assign them to their 
+            # appropriate places.
             for hit in hits:
                 hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
                 hStop = ROOT.TVector3( hit.Stop[0]/10.-offset[0], hit.Stop[1]/10.-offset[1], hit.Stop[2]/10.-offset[2] )
 
-                # Don't use edep-sim's PrimaryId, which thinks you want to associate absoltely everything with the primary
-                # Instead, get the actual contributors (usually only one) and take the biggest
+                # Get the trajectory that made this hit.
+                # Don't use edep-sim's PrimaryId, which thinks you want to 
+                # associate absoltely everything with the primary
+                # Instead, get the actual contributors (usually only one; 
+                # may be several for certain run settings, but this is a 
+                # very unusual situation) and take the biggest, which is 
+                # always the 0th entry.
                 tid = hit.Contrib[0]
-
                 traj = event.Trajectories[tid]
-                if traj.ParentId == -1: # primary particle
+                
+                # If it's a hit from a primary particle:
+                if traj.ParentId == -1:
+                    # Get the index of the primary particle that 
+                    # ultimately let to this hit. fsParticleIdx is a 
+                    # dictionary where the keys are the trackIDs of the 
+                    # primary trajectories, and the values are indices 0, 
+                    # 1, ...
                     idx = fsParticleIdx[hit.PrimaryId]
+                    
+                    # For this hit due to a primary, record its energy 
+                    # deposited, and its length for the dE/dx information
                     trk_calo[idx] += hit.EnergyDeposit
                     end_point[idx] = hStop
                     dx = (hStop-hStart).Mag()
                     track_length[idx] += dx
                     this_step[idx][1] += dx
                     this_step[idx][0] += hit.EnergyDeposit
+                    # If the hit is longer than half a millimeter, then it 
+                    # contributed significantly to the track:
                     if this_step[idx][1] > 0.5:
-                        dEdX[idx].append( (this_step[idx][0], this_step[idx][1], hStart) ) # MeV/cm
+                        # Append the info we need for track reco
+                        dEdX[idx].append( (this_step[idx][0], this_step[idx][1], hStart) ) # MeV/mm
+                        # Reset this step
                         this_step[idx] = [0., 0.]
-                else: # non-primary energy
+                # If this hit is not due to a primary particle, but its 
+                # start is close to the current end of any primary track, 
+                # then add its energy to the internal energy of that 
+                # primary particle, as it is likely the decay product of 
+                # the primary
+                else:
+                    # For each primary particle's current track endpoint:
                     for k,ep in enumerate(end_point):
+                        # If we haven't yet updated the endpoint, ignore 
+                        # the hit
                         if ep is None: continue
+                        # If it's within 10mm of an endpoint, then 
+                        # associate its energy with the internal energy of 
+                        # the particle
                         if (hStart-ep).Mag() < 10.:
                             int_energy[k] += hit.EnergyDeposit
 
+                # If the hit is due to a trajectory that ultimately came 
+                # from a gamma from a pi0 decay:
                 if tid in tid_to_gamma:
+                    # Add this hit's energy to that gamma's index
                     gamma_energy[tid_to_gamma[tid]] += hit.EnergyDeposit
 
-                if hit.PrimaryId != ileptraj: # here we do want to associate stuff to the lepton
+                # If the hit is not due to the lepton, but some other 
+                # primary particle (here we do want to check lepton 
+                # association and only consider those hits not due to the 
+                # lepton)
+                if hit.PrimaryId != ileptraj:
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
                     total_energy += hit.EnergyDeposit
 
