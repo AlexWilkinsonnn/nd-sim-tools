@@ -16,6 +16,7 @@ NDFD_ROOT_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sampl
 PAIR_H5_OUTPUT="/pnfs/dune/scratch/users/colweber/larbath_ndfd_pairs/tdr_sample/FHC/pair_allinfo_h5"
 
 SAVE_GENIE=false
+SAVE_GTRAC=false
 SAVE_EDEP=false # edep-sim output
 SAVE_EDEP_MAKECAF=false # summarised edep-sim for parameterised reco in mackeCAF
 SAVE_CAF=false # currently parameterised reco caf
