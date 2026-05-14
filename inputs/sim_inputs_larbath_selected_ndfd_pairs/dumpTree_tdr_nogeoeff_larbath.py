@@ -554,14 +554,70 @@ def loop( evt, tgeo, tout ):
 
             # Perform the check to make sure none of the corrections 
             # result in negative energies for the trajectories.
-            traj_to_Ereco = {}
+            # This chunk takes the 'HitCorr' approach, where only the 
+            # reported quantities (total had. energy of protons, total 
+            # had energy of pions, etc.) are checked for negative 
+            # values, and if one is found, no density correction is 
+            # applied.
+            p_act = 0.
+            n_act = 0.
+            pip_act = 0.
+            pim_act = 0.
+            pi0_act = 0.
+            other_act = 0.
+            p_inact = 0.
+            n_inact = 0.
+            pip_inact = 0.
+            pim_inact = 0.
+            pi0_inact = 0.
+            other_inact = 0.
             for traj in traj_to_pdg.keys():
-            	traj_E = traj_to_Eact[traj] + traj_to_Einact[traj]
-            	if traj_E < 0:
+                pdg = traj_to_pdg[traj]
+                if pdg == 2212:
+                    p_act += traj_to_Eact[traj]
+                    p_inact += traj_to_Einact[traj]
+                elif pdg == 2112:
+                    n_act += traj_to_Eact[traj]
+                    n_inact += traj_to_Einact[traj]
+                elif pdg == 211:
+                    pip_act += traj_to_Eact[traj]
+                    pip_inact += traj_to_Einact[traj]
+                elif pdg == -211:
+                    pim_act += traj_to_Eact[traj]
+                    pim_inact += traj_to_Einact[traj]
+                elif pdg == 111:
+                    pi0_act += traj_to_Eact[traj]
+                    pi0_inact += traj_to_Einact[traj]
+                else:
+                    other_act += traj_to_Eact[traj]
+                    other_inact += traj_to_Einact[traj]
+            if p_act + p_inact > 0: t_hadP[0] = p_act + p_inact
+            else: t_hadP[0] = p_act
+            if n_act + n_inact > 0: t_hadN[0] = n_act + n_inact
+            else: t_hadN[0] = n_act
+            if pip_act + pip_inact > 0: t_hadPip[0] = pip_act + pip_inact
+            else: t_hadPip[0] = pip_act
+            if pim_act + pim_inact > 0: t_hadPim[0] = pim_act + pim_inact
+            else: t_hadPim[0] = pim_act
+            if pi0_act + pi0_inact > 0: t_hadPi0[0] = pi0_act + pi0_inact
+            else: t_hadPi0[0] = pi0_act
+            if other_act + other_inact > 0: t_hadOther[0] = other_act + other_inact
+            else: t_hadOther[0] = other_act
+            
+            t_hadCollar[0] = (collar_energy + collar_energy_corr if collar_energy + collar_energy_corr > 0 else collar_energy)
+            
+            # The following chunk implements the 'HybridCorr', where 
+            # each trajectory is checked for a negative corrected energy,
+            # and if it has one, the correction is not applied for 
+            # that trajectory.
+            ''' traj_to_Ereco = {}
+            for traj in traj_to_pdg.keys():
+                traj_E = traj_to_Eact[traj] + traj_to_Einact[traj]
+                if traj_E < 0:
             	    traj_to_Ereco[traj] = traj_to_Eact[traj]
-            	else:
-            	    traj_to_Ereco[traj] = traj_E
-            	    t_totCorr[0] += traj_to_Einact[traj]
+                else:
+                    traj_to_Ereco[traj] = traj_E
+                    t_totCorr[0] += traj_to_Einact[traj]
             t_hadCollar[0] = (collar_energy + collar_energy_corr if collar_energy + collar_energy_corr > 0 else collar_energy)
             
             # Assign the trajectories' energies to the appropriate places
@@ -575,7 +631,7 @@ def loop( evt, tgeo, tout ):
                 elif traj_pdg == 211: t_hadPip[0] += traj_E
                 elif traj_pdg == -211: t_hadPim[0] += traj_E
                 elif traj_pdg == 111: t_hadPi0[0] += traj_E
-                else: t_hadOther[0] += traj_E
+                else: t_hadOther[0] += traj_E '''
 
             for i in range(nfsp):
                 t_fsTrkLen[i] = track_length[i]
