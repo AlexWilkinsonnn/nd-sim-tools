@@ -246,6 +246,8 @@ python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
 echo "LS-ing n2fd_outputs following Edepsim_ana.py..."
 cd ../../n2fd_outputs
 ls -lrth ./*
+cd ../n2fd_outputs_trim
+ls -lrth ./*
 cd ../
 
 echo "Running nd-fd pair maker"
