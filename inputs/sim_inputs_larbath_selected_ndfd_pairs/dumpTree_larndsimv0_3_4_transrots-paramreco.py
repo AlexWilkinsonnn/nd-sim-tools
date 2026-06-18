@@ -91,6 +91,7 @@ def initHDF5File(output_file, paramreco):
         f.create_dataset('fd_deps', (0,), dtype=depos_dtype, maxshape=(None,))
         f.create_dataset('fd_deps_trim', (0,), dtype=depos_dtype, maxshape=(None,))
         f.create_dataset('fd_vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
+        f.create_dataset('fd_vertices_trim', (0,), dtype=vertices_dtype, maxshape=(None,))
         if paramreco:
             f.create_dataset('nd_paramreco', (0,), dtype=paramreco_dtype, maxshape=(None,))
             f.create_dataset('nd_paramreco_part', (0,), dtype=paramreco_part_dtype, maxshape=(None,))
@@ -99,11 +100,12 @@ def initHDF5File(output_file, paramreco):
 
 # Resize HDF5 file and save output arrays
 def updateHDF5File(
-    output_file, segments, vertices, fd_deps, fd_deps_trim,fd_vertices, nd_paramreco, nd_paramreco_part, primaries, lepton
+    output_file, segments, vertices, fd_deps, fd_deps_trim, fd_vertices, fd_vertices_trim, nd_paramreco, nd_paramreco_part, primaries, lepton
 ):
     if any([
         len(segments), len(vertices), len(fd_deps), len(fd_deps_trim), len(fd_vertices), 
-        len(nd_paramreco), len(nd_paramreco_part), len(primaries), len(lepton)
+        len(fd_vertices_trim), len(nd_paramreco), len(nd_paramreco_part), len(primaries), 
+        len(lepton)
     ]):
         with h5py.File(output_file, 'a') as f:
             if len(segments):
@@ -130,6 +132,11 @@ def updateHDF5File(
                 nvert = len(f['fd_vertices'])
                 f['fd_vertices'].resize((nvert+len(fd_vertices),))
                 f['fd_vertices'][nvert:] = fd_vertices
+                
+            if len(fd_vertices_trim):
+                nvert_trim = len(f['fd_vertices_trim'])
+                f['fd_vertices_trim'].resize((nvert+len(fd_vertices_trim),))
+                f['fd_vertices_trim'][nvert:] = fd_vertices_trim
 
             if len(nd_paramreco):
                 nprec = len(f['nd_paramreco'])
@@ -180,6 +187,7 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
     fd_depos_trim_list = list()
     vertices_list = list()
     fd_vertices_list = list()
+    fd_vertices_trim_list = list()
     param_reco_list = list()
     param_reco_part_list = list()
     primaries_list = list()
@@ -323,6 +331,15 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
             dep[i_dep]["uniqID"] = i_dep
             dep[i_dep]["outsideNDLAr"] = -1
         fd_depos_list.append(dep)
+        
+        # Dump the trimmed FD deps + vertex.
+        # The deps do not need to be in the segment format required to larnd-sim
+        vertex_fd_trim = np.empty(1, dtype=vertices_dtype)
+        vertex_fd_trim["eventID"] = i_event
+        vertex_fd_trim["x_vert"] = event_trim.fd_vtx_cm_pair_nd_nonecc[0]
+        vertex_fd_trim["y_vert"] = event_trim.fd_vtx_cm_pair_nd_nonecc[1]
+        vertex_fd_trim["z_vert"] = event_trim.fd_vtx_cm_pair_nd_nonecc[2]
+        fd_vertices_trim_list.append(vertex_fd_trim)
         
         dep_trim = np.empty(event_trim.nEdeps, dtype=depos_dtype)
         for (
@@ -504,6 +521,7 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
         np.concatenate(fd_depos_list, axis=0) if fd_depos_list else np.empty((0,)),
         np.concatenate(fd_depos_trim_list, axis=0) if fd_depos_trim_list else np.empty((0,)),
         np.concatenate(fd_vertices_list, axis=0) if fd_vertices_list else np.empty((0,)),
+        np.concatenate(fd_vertices_trim_list, axis=0) if fd_vertices_trim_list else np.empty((0,)),
         np.concatenate(param_reco_list, axis=0) if param_reco_list else np.empty((0,)),
         np.concatenate(param_reco_part_list, axis=0) if param_reco_part_list else np.empty((0,)),
         np.concatenate(primaries_list, axis=0) if primaries_list else np.empty((0,)),
