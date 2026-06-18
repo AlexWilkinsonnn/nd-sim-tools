@@ -29,6 +29,7 @@ parser.add_argument(
     "--out_dir", type=str, default="/dune/app/users/weishi/testn2fd/DUNE_ND_GeoEff/app/output"
 )
 parser.add_argument("--caf_file", type=str)
+parser.add_argument("--trim", action="store_true", help="Whether to trim the Edeps to only include those in volArgonCubeActive")
 args = parser.parse_args()
 a, config_file, out_path, caf = args.input, args.config, args.out_dir, args.caf_file
 
@@ -214,7 +215,6 @@ myEvents.Branch('nd_fd_throws_passed', nd_fd_throws_passed, 'nd_fd_throws_passed
 ###########################
 # Loop over edepsim events
 ##########################
-
 for jentry in range(entries):
     if jentry not in passed_event_IDs:
         continue
@@ -310,6 +310,12 @@ for jentry in range(entries):
             edep_parentID = trajectories_parentid[edep_trkID]
             edep_pdg = trajectories_pdg[edep_trkID]
             edep = hitSegment.GetEnergyDeposit()
+            if args.trim:
+                if (abs(edep_pdg) < 11 or abs(edep_pdg) > 16) and \
+                (edep_x < -357.35 or edep_x > 357.35 or \
+                edep_y < -145.123 or edep_y > 155.897 or \
+                edep_z < 411.45 or edep_z > 920.55):
+                    continue
 
             all_dep_startpos_list.append(edep_start_x)
             all_dep_startpos_list.append(edep_start_y)

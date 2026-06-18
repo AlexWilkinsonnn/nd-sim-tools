@@ -233,11 +233,16 @@ echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
 
 echo "Running translation + rotation throws to get selected nd-fd pairs"
 mkdir n2fd_outputs
+mkdir n2fd_outputs_trim
 cd ${TRANSROTS_DIR}/app
 python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
                       --out_dir ../../n2fd_outputs \
 					  --caf_file ../../${HORN}.${RNDSEED}.nd.CAF.root \
                       ../../edep_larbath.${RNDSEED}.root # 1> /dev/null 2/ /dev/null
+python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
+                      --out_dir ../../n2fd_outputs_trim \
+					  --caf_file ../../${HORN}.${RNDSEED}.nd.CAF.root \
+            --trim ../../edep_larbath.${RNDSEED}.root # 1> /dev/null 2/ /dev/null
 echo "LS-ing n2fd_outputs following Edepsim_ana.py..."
 cd ../../n2fd_outputs
 ls -lrth ./*
@@ -247,6 +252,7 @@ echo "Running nd-fd pair maker"
 ls -lrth
 python dumpTree_larndsimv0_3_4_transrots-paramreco.py --param_reco_file ${HORN}.${RNDSEED}.nd.CAF.root \
                                                       n2fd_outputs/root_out/n2fd_paired_out.root \
+                                                      n2fd_outputs_trim/root_out/n2fd_paired_out.root \
                                                       ${HORN}.${RNDSEED}.ndfd_preco_pairs.h5
 
 echo "Copying files to dCache..."

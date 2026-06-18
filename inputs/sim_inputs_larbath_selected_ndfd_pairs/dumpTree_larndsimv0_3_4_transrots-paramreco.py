@@ -50,6 +50,7 @@ paramreco_dtype = np.dtype([("eventID", "u4"), ("cafTree_event", "u4"),
                             ("nNucleus", "u4"), ("nUNKNOWN", "u4"),
                             ("eP", "f4"), ("eN", "f4"),
                             ("ePip", "f4"), ("ePim", "f4"), ("ePi0", "f4"), ("eOther", "f4"),
+                            ("ND_Etrim", "f4"),
                             ("eRecoP", "f4"), ("eRecoN", "f4"),
                             ("eRecoPip", "f4"), ("eRecoPim", "f4"), ("eRecoPi0", "f4"),
                             ("eRecoOther", "f4"),
@@ -88,6 +89,7 @@ def initHDF5File(output_file, paramreco):
         f.create_dataset('segments', (0,), dtype=segments_dtype, maxshape=(None,))
         f.create_dataset('vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
         f.create_dataset('fd_deps', (0,), dtype=depos_dtype, maxshape=(None,))
+        f.create_dataset('fd_deps_trim', (0,), dtype=depos_dtype, maxshape=(None,))
         f.create_dataset('fd_vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
         if paramreco:
             f.create_dataset('nd_paramreco', (0,), dtype=paramreco_dtype, maxshape=(None,))
@@ -97,11 +99,11 @@ def initHDF5File(output_file, paramreco):
 
 # Resize HDF5 file and save output arrays
 def updateHDF5File(
-    output_file, segments, vertices, fd_deps, fd_vertices, nd_paramreco, nd_paramreco_part, primaries, lepton
+    output_file, segments, vertices, fd_deps, fd_deps_trim,fd_vertices, nd_paramreco, nd_paramreco_part, primaries, lepton
 ):
     if any([
-        len(segments), len(vertices), len(fd_deps), len(fd_vertices), len(nd_paramreco),
-        len(nd_paramreco_part), len(primaries), len(lepton)
+        len(segments), len(vertices), len(fd_deps), len(fd_deps_trim), len(fd_vertices), 
+        len(nd_paramreco), len(nd_paramreco_part), len(primaries), len(lepton)
     ]):
         with h5py.File(output_file, 'a') as f:
             if len(segments):
@@ -118,6 +120,11 @@ def updateHDF5File(
                 ndeps = len(f['fd_deps'])
                 f['fd_deps'].resize((ndeps+len(fd_deps),))
                 f['fd_deps'][ndeps:] = fd_deps
+                
+            if len(fd_deps_trim):
+                ndeps_trim = len(f['fd_deps_trim'])
+                f['fd_deps_trim'].resize((ndeps_trim+len(fd_deps_trim),))
+                f['fd_deps_trim'][ndeps_trim:] = fd_deps_trim
 
             if len(fd_vertices):
                 nvert = len(f['fd_vertices'])
@@ -145,12 +152,13 @@ def updateHDF5File(
                 f['lepton'][nlep:] = lepton
 
 # Read a file and dump it.
-def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
+def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEdeps=20):
     # The input file is generated in a previous test (100TestTree.sh).
     inputFile = TFile(input_file)
-
+    inputFileTrim = TFile(input_file_trim)
     # Get the input tree out of the file.
     inputTree = inputFile.Get("myEvents")
+    inputTreeTrim = inputFileTrim.Get("myEvents")
 
     # Get the caf tree for the param reco if it exists
     if param_reco_file is not None:
@@ -169,6 +177,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
 
     segments_list = list()
     fd_depos_list = list()
+    fd_depos_trim_list = list()
     vertices_list = list()
     fd_vertices_list = list()
     param_reco_list = list()
@@ -176,7 +185,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
     primaries_list = list()
     lepton_list = list()
 
-    for i_event, event in enumerate(inputTree):
+    for i_event, (event, event_trim) in enumerate(zip(inputTree, inputTreeTrim)):
         if ((i_event) % 50 == 0):
             print(i_event)
 
@@ -314,6 +323,50 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
             dep[i_dep]["uniqID"] = i_dep
             dep[i_dep]["outsideNDLAr"] = -1
         fd_depos_list.append(dep)
+        
+        dep_trim = np.empty(event_trim.nEdeps, dtype=depos_dtype)
+        for (
+            i_dep, (dep_E, start_t, stop_t, start_x, stop_x, start_y, stop_y, start_z, stop_z)
+        ) in enumerate(
+            zip(
+                event_trim.deps_E_MeV,
+                event_trim.deps_start_t_us, event_trim.deps_stop_t_us,
+                event_trim.fd_deps_start_x_cm_pair_nd_nonecc, event_trim.fd_deps_stop_x_cm_pair_nd_nonecc,
+                event_trim.fd_deps_start_y_cm_pair_nd_nonecc, event_trim.fd_deps_stop_y_cm_pair_nd_nonecc,
+                event_trim.fd_deps_start_z_cm_pair_nd_nonecc, event_trim.fd_deps_stop_z_cm_pair_nd_nonecc,
+            )
+        ):
+            dep_trim[i_dep]["eventID"] = i_event
+            dep_trim[i_dep]["x_start"] = start_x
+            dep_trim[i_dep]["y_start"] = start_y
+            dep_trim[i_dep]["z_start"] = start_z
+            dep_trim[i_dep]["t0_start"] = start_t
+            dep_trim[i_dep]["x_end"] = stop_x
+            dep_trim[i_dep]["y_end"] = stop_y
+            dep_trim[i_dep]["z_end"] = stop_z
+            dep_trim[i_dep]["t0_end"] = stop_t
+            dep_trim[i_dep]["dE"] = dep_E
+            xd = dep_trim[i_dep]["x_end"] - dep_trim[i_dep]["x_start"]
+            yd = dep_trim[i_dep]["y_end"] - dep_trim[i_dep]["y_start"]
+            zd = dep_trim[i_dep]["z_end"] - dep_trim[i_dep]["z_start"]
+            dx = sqrt(xd**2 + yd**2 + zd**2)
+            dep_trim[i_dep]["dx"] = dx
+            dep_trim[i_dep]["x"] = (
+                (dep_trim[i_dep]["x_start"] + dep_trim[i_dep]["x_end"]) / 2.
+            )
+            dep_trim[i_dep]["y"] = (
+                (dep_trim[i_dep]["y_start"] + dep_trim[i_dep]["y_end"]) / 2.
+            )
+            dep_trim[i_dep]["z"] = (
+                (dep_trim[i_dep]["z_start"] + dep_trim[i_dep]["z_end"]) / 2.
+            )
+            dep_trim[i_dep]["t0"] = (
+                (dep_trim[i_dep]["t0_start"] + dep_trim[i_dep]["t0_end"]) / 2.
+            )
+            dep_trim[i_dep]["dEdx"] = dep_trim[i_dep]["dE"] / dx if dx > 0 else 0
+            dep_trim[i_dep]["uniqID"] = i_dep
+            dep_trim[i_dep]["outsideNDLAr"] = -1
+        fd_depos_trim_list.append(dep_trim)
 
         # Dump genie primaries
         primaries = np.empty(event.Genie_nParts, dtype=primaries_dtype)
@@ -388,6 +441,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
             prec["ePim"] = prec_event.ePim
             prec["ePi0"] = prec_event.ePi0
             prec["eOther"] = prec_event.eOther
+            prec["ND_Etrim"] = prec_event.ND_Etrim
             prec["eRecoP"] = prec_event.eRecoP
             prec["eRecoN"] = prec_event.eRecoN
             prec["eRecoPip"] = prec_event.eRecoPip
@@ -448,6 +502,7 @@ def dump(input_file, output_file, param_reco_file=None, min_nEdeps=20):
         np.concatenate(segments_list, axis=0) if segments_list else np.empty((0,)),
         np.concatenate(vertices_list, axis=0) if vertices_list else np.empty((0,)),
         np.concatenate(fd_depos_list, axis=0) if fd_depos_list else np.empty((0,)),
+        np.concatenate(fd_depos_trim_list, axis=0) if fd_depos_trim_list else np.empty((0,)),
         np.concatenate(fd_vertices_list, axis=0) if fd_vertices_list else np.empty((0,)),
         np.concatenate(param_reco_list, axis=0) if param_reco_list else np.empty((0,)),
         np.concatenate(param_reco_part_list, axis=0) if param_reco_part_list else np.empty((0,)),
