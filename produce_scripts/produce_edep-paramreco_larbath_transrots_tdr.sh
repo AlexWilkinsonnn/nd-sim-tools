@@ -34,7 +34,7 @@ GEOMETRY_ND="MPD_SPY_LAr.gdml"
 GEOMETRY_ND_DUMMY_EDEP="edep_dummy_MPD_SPY_LAr_geo.root"
 TOPVOL_ND="volArgonCubeActive"
 EDEP_MAC="dune-nd.mac"
-EDEPSIM_ANA_CFG="UserConfig_tdr_nofdthrows.py"
+EDEPSIM_ANA_CFG="UserConfig_tdr_nofdthrows_realFDVeto.py"
 
 MODE="neutrino"
 HORN="FHC"
