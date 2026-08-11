@@ -1,4 +1,4 @@
-# Install script for directory: /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/app
+# Install script for directory: /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -42,3 +42,21 @@ if(NOT DEFINED CMAKE_OBJDUMP)
   set(CMAKE_OBJDUMP "/usr/bin/objdump")
 endif()
 
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for each subdirectory.
+  include("/exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/pybind11/cmake_install.cmake")
+  include("/exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/src/cmake_install.cmake")
+  include("/exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/app/cmake_install.cmake")
+
+endif()
+
+if(CMAKE_INSTALL_COMPONENT)
+  set(CMAKE_INSTALL_MANIFEST "install_manifest_${CMAKE_INSTALL_COMPONENT}.txt")
+else()
+  set(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
+endif()
+
+string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
+       "${CMAKE_INSTALL_MANIFEST_FILES}")
+file(WRITE "/exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/${CMAKE_INSTALL_MANIFEST}"
+     "${CMAKE_INSTALL_MANIFEST_CONTENT}")

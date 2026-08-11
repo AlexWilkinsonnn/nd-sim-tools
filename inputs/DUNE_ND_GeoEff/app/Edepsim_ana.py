@@ -16,7 +16,7 @@ import ROOT
 from ROOT import TG4Event, TFile, TTree, TGraph
 from ROOT import gROOT # for creating the output file
 from array import array
-from math import cos, sin
+from math import sin, cos, pi
 import random
 
 import argparse
@@ -29,9 +29,10 @@ parser.add_argument(
     "--out_dir", type=str, default="/dune/app/users/weishi/testn2fd/DUNE_ND_GeoEff/app/output"
 )
 parser.add_argument("--caf_file", type=str)
+parser.add_argument("--vtx_file", type=str, default="../../n2fd_outputs/root_out/n2fd_paired_out.root")
 parser.add_argument("--trim", action="store_true", help="Whether to trim the Edeps to only include those in volArgonCubeActive")
 args = parser.parse_args()
-a, config_file, out_path, caf = args.input, args.config, args.out_dir, args.caf_file
+a, config_file, out_path, caf, vtx_file_str = args.input, args.config, args.out_dir, args.caf_file, args.vtx_file
 
 with open(config_file) as infile:
     exec(infile.read())
@@ -56,6 +57,16 @@ cafTree = caf_file.Get("caf")
 passed_event_IDs = []
 for event in cafTree:
     passed_event_IDs.append(event.event)
+    
+vtx_file = TFile(vtx_file_str, "READ")
+if not vtx_file and args.trim:
+    print("Error: could not open vtx file ", vtx_file_str, ", but wanted to calculate FD Etrim.")
+    sys.exit()
+xyz_fd_vertices = []
+if args.trim:
+    vtxTree = vtx_file.Get("myEvents")
+    for event in vtxTree:
+        xyz_fd_vertices.append([event.fd_vtx_cm_pair_nd_nonecc[0], event.fd_vtx_cm_pair_nd_nonecc[1], event.fd_vtx_cm_pair_nd_nonecc[2]])
 
 event = TG4Event()
 inputTree.SetBranchAddress("Event", event)
@@ -215,6 +226,7 @@ myEvents.Branch('nd_fd_throws_passed', nd_fd_throws_passed, 'nd_fd_throws_passed
 ###########################
 # Loop over edepsim events
 ##########################
+entry_counter = 0
 for jentry in range(entries):
     if jentry not in passed_event_IDs:
         continue
@@ -311,7 +323,7 @@ for jentry in range(entries):
             edep_pdg = trajectories_pdg[edep_trkID]
             edep = hitSegment.GetEnergyDeposit()
             if args.trim:
-                if (abs(edep_pdg) < 11 or abs(edep_pdg) > 16) and \
+                if (IsFromPrimaryLep(edep_trkID, trajectories_parentid, PrimaryLepTrackID) == False) and \
                 (edep_x < -357.35 or edep_x > 357.35 or \
                 edep_y < -145.123 or edep_y > 155.897 or \
                 edep_z < 411.45 or edep_z > 920.55):
@@ -450,7 +462,7 @@ for jentry in range(entries):
         # Only do one throw in ND at a time
         ####################################
         geoEff.setNthrows(1)
-        geoEff.throwTransforms() # this randomly generates new vtx position and a rotation angle w.r.t. the neutrino direction
+        geoEff.throwTransforms(0.0, 0.0, 0.0, 2*pi) # this randomly generates new vtx position and a rotation angle w.r.t. the neutrino direction
 
         # Get the randomly generated vtx x, y, z, and the angle
         throwVtxX_nd = geoEff.getCurrentThrowTranslationsX() # cm
@@ -659,7 +671,11 @@ for jentry in range(entries):
                         # Below do random throw (translate only) in FD similar to ND: only one throw in FD at a time
                         ##########################################################################################
                         geoEff.setNthrowsFD(1)
-                        geoEff.throwTransformsFD() # this randomly generates new vtx position in FD FV
+                        if args.trim:  # If trimming, use FD vertex position from non-trim throw
+                            geoEff.throwTransformsFD(xyz_fd_vertices[entry_counter][0], xyz_fd_vertices[entry_counter][1], xyz_fd_vertices[entry_counter][2])
+
+                        else:
+                            geoEff.throwTransformsFD() # this randomly generates new vtx position in FD FV
 
                         fd_vtx_x_cm_pair_nd_nonecc = geoEff.getCurrentFDThrowTranslationsX()
                         fd_vtx_y_cm_pair_nd_nonecc = geoEff.getCurrentFDThrowTranslationsY()
@@ -774,6 +790,8 @@ for jentry in range(entries):
 
     # event level
     myEvents.Fill()
+    
+    entry_counter += 1
 
 f_out.cd()
 myEvents.Write()

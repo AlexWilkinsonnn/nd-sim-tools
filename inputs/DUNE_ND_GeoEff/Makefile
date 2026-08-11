@@ -87,14 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff && $(CMAKE_COMMAND) -E cmake_progress_start /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/CMakeFiles /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/pybind11//CMakeFiles/progress.marks
-	cd /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 pybind11/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/CMakeFiles /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff//CMakeFiles/progress.marks
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
 	$(CMAKE_COMMAND) -E cmake_progress_start /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 pybind11/clean
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 clean
 .PHONY : clean
 
 # The main clean target
@@ -103,18 +103,96 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 pybind11/preinstall
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 pybind11/preinstall
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
+
+#=============================================================================
+# Target rules for targets named geoEff
+
+# Build rule for target.
+geoEff: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 geoEff
+.PHONY : geoEff
+
+# fast build rule for target.
+geoEff/fast:
+	$(MAKE) $(MAKESILENT) -f src/CMakeFiles/geoEff.dir/build.make src/CMakeFiles/geoEff.dir/build
+.PHONY : geoEff/fast
+
+#=============================================================================
+# Target rules for targets named pyGeoEff
+
+# Build rule for target.
+pyGeoEff: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 pyGeoEff
+.PHONY : pyGeoEff
+
+# fast build rule for target.
+pyGeoEff/fast:
+	$(MAKE) $(MAKESILENT) -f src/CMakeFiles/pyGeoEff.dir/build.make src/CMakeFiles/pyGeoEff.dir/build
+.PHONY : pyGeoEff/fast
+
+#=============================================================================
+# Target rules for targets named compile_EDepSimEvents
+
+# Build rule for target.
+compile_EDepSimEvents: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 compile_EDepSimEvents
+.PHONY : compile_EDepSimEvents
+
+# fast build rule for target.
+compile_EDepSimEvents/fast:
+	$(MAKE) $(MAKESILENT) -f app/CMakeFiles/compile_EDepSimEvents.dir/build.make app/CMakeFiles/compile_EDepSimEvents.dir/build
+.PHONY : compile_EDepSimEvents/fast
+
+#=============================================================================
+# Target rules for targets named runGeoEffEDepSimBeamDir
+
+# Build rule for target.
+runGeoEffEDepSimBeamDir: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 runGeoEffEDepSimBeamDir
+.PHONY : runGeoEffEDepSimBeamDir
+
+# fast build rule for target.
+runGeoEffEDepSimBeamDir/fast:
+	$(MAKE) $(MAKESILENT) -f app/CMakeFiles/runGeoEffEDepSimBeamDir.dir/build.make app/CMakeFiles/runGeoEffEDepSimBeamDir.dir/build
+.PHONY : runGeoEffEDepSimBeamDir/fast
+
+#=============================================================================
+# Target rules for targets named runGeoEffFDEvtSim
+
+# Build rule for target.
+runGeoEffFDEvtSim: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 runGeoEffFDEvtSim
+.PHONY : runGeoEffFDEvtSim
+
+# fast build rule for target.
+runGeoEffFDEvtSim/fast:
+	$(MAKE) $(MAKESILENT) -f app/CMakeFiles/runGeoEffFDEvtSim.dir/build.make app/CMakeFiles/runGeoEffFDEvtSim.dir/build
+.PHONY : runGeoEffFDEvtSim/fast
+
+#=============================================================================
+# Target rules for targets named runGeoEffFDEvtSim_hadronplot
+
+# Build rule for target.
+runGeoEffFDEvtSim_hadronplot: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 runGeoEffFDEvtSim_hadronplot
+.PHONY : runGeoEffFDEvtSim_hadronplot
+
+# fast build rule for target.
+runGeoEffFDEvtSim_hadronplot/fast:
+	$(MAKE) $(MAKESILENT) -f app/CMakeFiles/runGeoEffFDEvtSim_hadronplot.dir/build.make app/CMakeFiles/runGeoEffFDEvtSim_hadronplot.dir/build
+.PHONY : runGeoEffFDEvtSim_hadronplot/fast
 
 # Help Target
 help:
@@ -124,6 +202,12 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... compile_EDepSimEvents"
+	@echo "... geoEff"
+	@echo "... pyGeoEff"
+	@echo "... runGeoEffEDepSimBeamDir"
+	@echo "... runGeoEffFDEvtSim"
+	@echo "... runGeoEffFDEvtSim_hadronplot"
 .PHONY : help
 
 
@@ -135,6 +219,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

@@ -1,4 +1,4 @@
-# Install script for directory: /dune/app/users/awilkins/nd-sim-tools/inputs/DUNE_ND_GeoEff/src
+# Install script for directory: /exp/dune/data/users/colweber/ndfd-pairs/ndfd_depos/nd-sim-tools/inputs/DUNE_ND_GeoEff/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

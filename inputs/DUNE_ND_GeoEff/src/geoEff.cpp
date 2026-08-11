@@ -281,7 +281,7 @@ void geoEff::setVetoEnergyThresholds(std::vector< float > vThresholds){
   std::cout << std::endl;
 }
 
-void geoEff::throwTransforms(){
+void geoEff::throwTransforms(double xtrans, double ytrans, double ztrans, double rot){
 
   // Clear vectors
   translations[0].clear();
@@ -295,16 +295,27 @@ void geoEff::throwTransforms(){
     if (not randomizeVertex[dim]){
       translations[dim].resize(0,0);
     } else {
-      translations[dim].clear();
-      for (unsigned int i = 0; i < N_THROWS; i++){
-        translations[dim].emplace_back(uniform(prnGenerator)*(range[dim][1]-range[dim][0])+range[dim][0]+offset[dim]);
+      if(xtrans == 0.0 && ytrans == 0.0 && ztrans == 0.0 && rot == 0.0) {
+        translations[dim].clear();
+        for (unsigned int i = 0; i < N_THROWS; i++){
+          translations[dim].emplace_back(uniform(prnGenerator)*(range[dim][1]-range[dim][0])+range[dim][0]+offset[dim]);
+        }
+      } else {
+        translations[dim].clear();
+        for (unsigned int i = 0; i < N_THROWS; i++){
+          translations[dim].emplace_back(dim == 0 ? xtrans : (dim == 1 ? ytrans : ztrans));
+        }
       }
     }
   }
 
   rotations.clear();
   for (unsigned int i = 0; i < N_THROWS; i++){
-    rotations.emplace_back((uniform(prnGenerator)-0.5)*2*M_PI);
+    if(xtrans == 0.0  && ytrans == 0.0 && ztrans == 0.0 && rot == 0.0) {
+      rotations.emplace_back((uniform(prnGenerator)-0.5)*2*M_PI);
+    } else {
+      rotations.emplace_back(rot);
+    }
   }
 
 }
@@ -336,7 +347,7 @@ void geoEff::throwTransformsNDECC(){
 
 }
 
-void geoEff::throwTransformsFD(){
+void geoEff::throwTransformsFD(double xtrans, double ytrans, double ztrans){
 
   // Clear vectors
   fdtranslations[0].clear();
@@ -348,9 +359,16 @@ void geoEff::throwTransformsFD(){
     if (not randomizeVertexfd[dim]){
       fdtranslations[dim].resize(0,0);
     } else {
-      fdtranslations[dim].clear();
-      for (unsigned int i = 0; i < N_THROWS_FD; i++){
-        fdtranslations[dim].emplace_back(uniform(prnGenerator)*(fdrange[dim][1]-fdrange[dim][0])+fdrange[dim][0]);
+      if(xtrans == 0.0 && ytrans == 0.0 && ztrans == 0.0) {
+        fdtranslations[dim].clear();
+        for (unsigned int i = 0; i < N_THROWS_FD; i++){
+          fdtranslations[dim].emplace_back(uniform(prnGenerator)*(fdrange[dim][1]-fdrange[dim][0])+fdrange[dim][0]);
+        }
+      } else {
+        fdtranslations[dim].clear();
+        for (unsigned int i = 0; i < N_THROWS_FD; i++){
+          fdtranslations[dim].emplace_back(dim == 0 ? xtrans : (dim == 1 ? ytrans : ztrans));
+        }
       }
     }
   }

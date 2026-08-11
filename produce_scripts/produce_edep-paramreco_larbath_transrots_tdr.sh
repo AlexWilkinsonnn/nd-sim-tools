@@ -242,6 +242,7 @@ python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
 python Edepsim_ana.py --config ../../${EDEPSIM_ANA_CFG} \
                       --out_dir ../../n2fd_outputs_trim \
 					  --caf_file ../../${HORN}.${RNDSEED}.nd.CAF.root \
+            --vtx_file ../../n2fd_outputs/root_out/n2fd_paired_out.root \
             --trim ../../edep_larbath.${RNDSEED}.root # 1> /dev/null 2/ /dev/null
 echo "LS-ing n2fd_outputs following Edepsim_ana.py..."
 cd ../../n2fd_outputs

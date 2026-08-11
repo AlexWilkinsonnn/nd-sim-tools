@@ -64,9 +64,11 @@ PYBIND11_MODULE(pyGeoEff, m) {
       .def("setMuEndV", &geoEff::setMuEndV)
       .def("setMuStartP", &geoEff::setMuStartP)
       .def("setHadronHitV", &geoEff::setHadronHitV)
-      .def("throwTransforms", &geoEff::throwTransforms)
+      .def("throwTransforms", &geoEff::throwTransforms, 
+        py::arg("xtrans")=0.0, py::arg("ytrans")=0.0, py::arg("ztrans")=0.0, py::arg("rot")=0.0)
       .def("throwTransformsNDECC", &geoEff::throwTransformsNDECC)
-      .def("throwTransformsFD", &geoEff::throwTransformsFD)
+      .def("throwTransformsFD", &geoEff::throwTransformsFD, 
+        py::arg("xtrans")=0.0, py::arg("ytrans")=0.0, py::arg("ztrans")=0.0)
       .def("getOffAxisMuEndV", &geoEff::getOffAxisMuEndV)
       .def("getOffAxisMuStartP", &geoEff::getOffAxisMuStartP)
       .def("getOffAxisHadronHitV", &geoEff::getOffAxisHadronHitV)

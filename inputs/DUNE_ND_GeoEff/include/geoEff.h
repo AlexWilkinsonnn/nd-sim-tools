@@ -168,9 +168,9 @@ class geoEff
   void setVetoSizes(std::vector< float > vSizes);
   void setVetoEnergyThresholds(std::vector< float > vThresholds);
 
-  void throwTransforms();
+  void throwTransforms(double xtrans = 0.0, double ytrans = 0.0, double ztrans = 0.0, double rot = 0.0);
   void throwTransformsNDECC();
-  void throwTransformsFD();
+  void throwTransformsFD(double xtrans = 0.0, double ytrans = 0.0, double ztrans = 0.0);
 
   std::vector< float > getCurrentThrowTranslationsX();
   std::vector< float > getCurrentThrowTranslationsY();
