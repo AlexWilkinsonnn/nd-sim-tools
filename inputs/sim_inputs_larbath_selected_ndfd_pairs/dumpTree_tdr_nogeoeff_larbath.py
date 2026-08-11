@@ -93,7 +93,7 @@ def loop( evt, tgeo, tout ):
             t_muon_endVolName.replace(0, ROOT.std.string.npos, "")
             t_muGArLen[0]=0.0;
             t_hadTot[0] = 0.
-            t_ND_Etrim[0] = 0.
+            t_ND_Ehad_cont[0] = 0.
             t_hadP[0] = 0.
             t_hadN[0] = 0.
             t_hadPip[0] = 0.
@@ -253,7 +253,7 @@ def loop( evt, tgeo, tout ):
 
             # hadronic containment -- find hits in ArgonCube
             hits = []
-            Etrim_hits = []  # Etrim hits are hits that should be included in Etrim calculation, 
+            Econt_hits = []  # Econt hits are hits that should be included in Etrim calculation, 
                              # but were excluded from volLArActive due to their being in a dead 
                              # region.
             # For each detector volume that has hits:
@@ -279,13 +279,13 @@ def loop( evt, tgeo, tout ):
                     if ("_").join(volName.split("_")[:-2]) == "volLArActive":
                         hits.append(hit)
                     # We also want to keep track of hits in volArgonCubeActive 
-                    # for calculating Etrim. The dimensions used to check this are 
+                    # for calculating Ehad_cont. The dimensions used to check this are 
                     # identical to those used in the geometric efficiency correction, and
                     # in the Ehad reco density correction.
                     elif (hMid.X() > -3573.5 and hMid.X() < 3573.5 and 
                         hMid.Y() > -1451.23 and hMid.Y() < 1558.97 and 
                         hMid.Z() > 4114.5 and hMid.Z() < 9205.5):
-                        Etrim_hits.append(hit)
+                        Econt_hits.append(hit)
 
             # Truth-matching energy -- make dictionary of trajectory --> primary pdg
             # We want to associate all of the energy from simulated
@@ -345,7 +345,7 @@ def loop( evt, tgeo, tout ):
             # trajectory
             collar_energy = 0.
             total_energy = 0.
-            Etrim = 0.
+            Econt = 0.
 
             # Each of these lists has one entry per primary particle
             track_length = [0. for i in range(nfsp)]
@@ -432,7 +432,7 @@ def loop( evt, tgeo, tout ):
                 if hit.PrimaryId != ileptraj:
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
                     total_energy += hit.EnergyDeposit
-                    Etrim += hit.EnergyDeposit
+                    Econt += hit.EnergyDeposit
 
                     # check if hit is in collar region
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
@@ -448,11 +448,11 @@ def loop( evt, tgeo, tout ):
                     elif pdg == 111: t_hadPi0[0] += hit.EnergyDeposit
                     else: t_hadOther[0] += hit.EnergyDeposit
 
-            # Finish Etrim calculation
-            for hit in Etrim_hits:
-                Etrim += hit.EnergyDeposit
+            # Finish Econt calculation
+            for hit in Econt_hits:
+                Econt += hit.EnergyDeposit
             t_hadTot[0] = total_energy
-            t_ND_Etrim[0] = Etrim
+            t_ND_Ehad_cont[0] = Econt
             t_hadCollar[0] = collar_energy
 
             for i in range(nfsp):
@@ -548,8 +548,8 @@ if __name__ == "__main__":
     tout.Branch('muECalLen',t_muECalLen,'muECalLen/F')
     t_hadTot = array('f', [0.] )
     tout.Branch('hadTot', t_hadTot, 'hadTot/F' )
-    t_ND_Etrim = array('f', [0.] )
-    tout.Branch('ND_Etrim', t_ND_Etrim, 'ND_Etrim/F' )
+    t_ND_Ehad_cont = array('f', [0.] )
+    tout.Branch('ND_Ehad_cont', t_ND_Ehad_cont, 'ND_Ehad_cont/F' )
     t_hadP = array('f', [0.] )
     tout.Branch('hadP', t_hadP, 'hadP/F' )
     t_hadN = array('f', [0.] )

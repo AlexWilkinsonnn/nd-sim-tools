@@ -182,7 +182,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
 {
   // read in dumpTree output file
   int ievt, lepPdg, muonReco, nFS;
-  float lepKE, muGArLen, muECalLen, hadTot, hadCollar, ND_Etrim;
+  float lepKE, muGArLen, muECalLen, hadTot, hadCollar, ND_Ehad_cont;
   float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
   float p3lep[3], vtx[3], muonExitPt[3], muonExitMom[3];
   int fsPdg[100];
@@ -202,7 +202,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "hadPim", &hadPim );
   tree->SetBranchAddress( "hadPi0", &hadPi0 );
   tree->SetBranchAddress( "hadOther", &hadOther );
-  tree->SetBranchAddress( "ND_Etrim", &ND_Etrim );
+  tree->SetBranchAddress( "ND_Ehad_cont", &ND_Ehad_cont );
   tree->SetBranchAddress( "p3lep", p3lep );
   tree->SetBranchAddress( "vtx", vtx );
   tree->SetBranchAddress( "muonExitPt", muonExitPt );
@@ -282,7 +282,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
     caf.ePim = 0.;
     caf.ePi0 = 0.;
     caf.eOther = 0.;
-    caf.ND_Etrim = 0.;
+    caf.ND_Ehad_cont = 0.;
     caf.eRecoP = 0.;
     caf.eRecoN = 0.;
     caf.eRecoPip = 0.;
@@ -448,7 +448,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         caf.fsTrkEndpointBall[i] = fsTrkEndpointBall[i]*0.001;
         caf.fsTrkCalo[i] = fsTrkCalo[i]*0.001;
       }
-      caf.ND_Etrim = ND_Etrim*0.001;
+      caf.ND_Ehad_cont = ND_Ehad_cont*0.001;
 
       caf.pileup_energy = 0.;
       if( rando->Rndm() < par.pileup_frac ) caf.pileup_energy = rando->Rndm() * par.pileup_max;

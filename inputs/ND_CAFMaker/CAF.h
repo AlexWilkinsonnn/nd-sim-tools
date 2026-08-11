@@ -29,7 +29,7 @@ public:
   // True particle counts
   int nFSP;
   int nP, nN, nipip, nipim, nipi0, nikp, nikm, nik0, niem, niother, nNucleus, nUNKNOWN;
-  double eP, eN, ePip, ePim, ePi0, eOther, ND_Etrim;
+  double eP, eN, ePip, ePim, ePi0, eOther, ND_Ehad_cont;
   double eRecoP, eRecoN, eRecoPip, eRecoPim, eRecoPi0, eRecoOther;
   int fsPdg[100];
   double fsPx[100], fsPy[100], fsPz[100], fsE[100];
