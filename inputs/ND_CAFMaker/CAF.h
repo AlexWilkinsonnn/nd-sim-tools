@@ -29,7 +29,7 @@ public:
   // True particle counts
   int nFSP;
   int nP, nN, nipip, nipim, nipi0, nikp, nikm, nik0, niem, niother, nNucleus, nUNKNOWN;
-  double eP, eN, ePip, ePim, ePi0, eOther, ND_Ehad_cont;
+  double eP, eN, ePip, ePim, ePi0, eOther, ND_Ehad_truedep, ND_Ehad_out, ND_Ehad_cont, ND_Ehad_act;
   double eRecoP, eRecoN, eRecoPip, eRecoPim, eRecoPi0, eRecoOther;
   int fsPdg[100];
   double fsPx[100], fsPy[100], fsPz[100], fsE[100];
@@ -41,7 +41,7 @@ public:
   double det_x;
 
   // Reco information CV
-  double Ev_reco, Elep_reco, theta_reco;
+  double Ev_reco, Elep_reco, Ehad_reco, Ehad_reco_nopile, theta_reco;
   int reco_numu, reco_nue, reco_nc, reco_q;
   int muon_contained, muon_tracker, muon_ecal, muon_exit, reco_lepton_pdg;
   float muon_endpoint[3];

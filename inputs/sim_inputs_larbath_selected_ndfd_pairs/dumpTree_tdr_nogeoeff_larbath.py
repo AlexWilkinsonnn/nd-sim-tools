@@ -92,8 +92,10 @@ def loop( evt, tgeo, tout ):
             t_muonReco[0] = -1;
             t_muon_endVolName.replace(0, ROOT.std.string.npos, "")
             t_muGArLen[0]=0.0;
-            t_hadTot[0] = 0.
+            t_hadTrue[0] = 0.
+            t_hadOut[0] = 0.
             t_ND_Ehad_cont[0] = 0.
+            t_hadAct[0] = 0.
             t_hadP[0] = 0.
             t_hadN[0] = 0.
             t_hadPip[0] = 0.
@@ -252,10 +254,13 @@ def loop( evt, tgeo, tout ):
                 if tot_length > 50.: t_muonReco[0] = 2 # tracker
 
             # hadronic containment -- find hits in ArgonCube
-            hits = []
-            Econt_hits = []  # Econt hits are hits that should be included in Etrim calculation, 
-                             # but were excluded from volLArActive due to their being in a dead 
-                             # region.
+            hitsTrue = []  # All hadronic hits
+            hitsOut = []   # Hadronic hits that are outside ND-LAr
+            hitsCont = []  # Econt hits are hits that should be included in Etrim calculation, 
+                           # but were excluded from volLArActive due to their being in a dead 
+                           # region. They are contained in ND-LAr
+            hitsAct = []   # Hadronic hits that are in volLArActive
+            
             # For each detector volume that has hits:
             for key in event.SegmentDetectors:
                 # For each hit in that volume:
@@ -275,17 +280,20 @@ def loop( evt, tgeo, tout ):
                     # volArgonCubeActive includes all volLArActive regions, and dead regions
                     # within ND-LAr. volArgonCubeActive excludes dead regions on the top and 
                     # bottom. Those regions are included in volArgonCube.
+                    hitsTrue.append(hit)
                     volName = node.GetName()
                     if ("_").join(volName.split("_")[:-2]) == "volLArActive":
-                        hits.append(hit)
+                        hitsAct.append(hit)
                     # We also want to keep track of hits in volArgonCubeActive 
                     # for calculating Ehad_cont. The dimensions used to check this are 
                     # identical to those used in the geometric efficiency correction, and
                     # in the Ehad reco density correction.
-                    elif (hMid.X() > -3573.5 and hMid.X() < 3573.5 and 
+                    if (hMid.X() > -3573.5 and hMid.X() < 3573.5 and 
                         hMid.Y() > -1451.23 and hMid.Y() < 1558.97 and 
                         hMid.Z() > 4114.5 and hMid.Z() < 9205.5):
-                        Econt_hits.append(hit)
+                        hitsCont.append(hit)
+                    else:
+                        hitsOut.append(hit)
 
             # Truth-matching energy -- make dictionary of trajectory --> primary pdg
             # We want to associate all of the energy from simulated
@@ -344,8 +352,10 @@ def loop( evt, tgeo, tout ):
             # Initialize collar energy, as it will be handled like a 
             # trajectory
             collar_energy = 0.
-            total_energy = 0.
-            Econt = 0.
+            true_energy = 0.
+            out_energy = 0.
+            cont_energy = 0.
+            act_energy = 0.
 
             # Each of these lists has one entry per primary particle
             track_length = [0. for i in range(nfsp)]
@@ -364,7 +374,7 @@ def loop( evt, tgeo, tout ):
             
             # Loop over the hits and assign them to their 
             # appropriate places.
-            for hit in hits:
+            for hit in hitsAct:
                 hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
                 hStop = ROOT.TVector3( hit.Stop[0]/10.-offset[0], hit.Stop[1]/10.-offset[1], hit.Stop[2]/10.-offset[2] )
 
@@ -431,8 +441,7 @@ def loop( evt, tgeo, tout ):
                 # lepton)
                 if hit.PrimaryId != ileptraj:
                     hStart = ROOT.TVector3( hit.Start[0]/10.-offset[0], hit.Start[1]/10.-offset[1], hit.Start[2]/10.-offset[2] )
-                    total_energy += hit.EnergyDeposit
-                    Econt += hit.EnergyDeposit
+                    act_energy += hit.EnergyDeposit
 
                     # check if hit is in collar region
                     if hStart.x() < collarLo[0] or hStart.x() > collarHi[0] or hStart.y() < collarLo[1] or hStart.y() > collarHi[1] or hStart.z() < collarLo[2] or hStart.z() > collarHi[2]:
@@ -448,11 +457,20 @@ def loop( evt, tgeo, tout ):
                     elif pdg == 111: t_hadPi0[0] += hit.EnergyDeposit
                     else: t_hadOther[0] += hit.EnergyDeposit
 
-            # Finish Econt calculation
-            for hit in Econt_hits:
-                Econt += hit.EnergyDeposit
-            t_hadTot[0] = total_energy
-            t_ND_Ehad_cont[0] = Econt
+            # Calculate Ehad true, Ehad out, and Ehad cont
+            for hit in hitsCont:
+                if hit.PrimaryId != ileptraj:
+                    cont_energy += hit.EnergyDeposit
+            for hit in hitsOut:
+                if hit.PrimaryId != ileptraj:
+                    out_energy += hit.EnergyDeposit
+            for hit in hitsTrue:
+                if hit.PrimaryId != ileptraj:
+                    true_energy += hit.EnergyDeposit
+            t_hadAct[0] = act_energy
+            t_ND_Ehad_cont[0] = cont_energy
+            t_hadOut[0] = out_energy
+            t_hadTrue[0] = true_energy
             t_hadCollar[0] = collar_energy
 
             for i in range(nfsp):
@@ -546,10 +564,14 @@ if __name__ == "__main__":
     tout.Branch('muGArLen',t_muGArLen,'muGArLen/F')
     t_muECalLen = array('f',[0])
     tout.Branch('muECalLen',t_muECalLen,'muECalLen/F')
-    t_hadTot = array('f', [0.] )
-    tout.Branch('hadTot', t_hadTot, 'hadTot/F' )
+    t_hadTrue = array('f', [0.] )
+    tout.Branch('hadTrue', t_hadTrue, 'hadTrue/F' )
+    t_hadOut = array('f', [0.] )
+    tout.Branch('hadOut', t_hadOut, 'hadOut/F' )
     t_ND_Ehad_cont = array('f', [0.] )
     tout.Branch('ND_Ehad_cont', t_ND_Ehad_cont, 'ND_Ehad_cont/F' )
+    t_hadAct = array('f', [0.] )
+    tout.Branch('hadAct', t_hadAct, 'hadAct/F' )
     t_hadP = array('f', [0.] )
     tout.Branch('hadP', t_hadP, 'hadP/F' )
     t_hadN = array('f', [0.] )

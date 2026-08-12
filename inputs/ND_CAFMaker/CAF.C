@@ -58,13 +58,16 @@ CAF::CAF( std::string filename, bool isGas )
   cafMVA->Branch( "nNucleus", &nNucleus, "nNucleus/I" );
   cafMVA->Branch( "nUNKNOWN", &nUNKNOWN, "nUNKNOWN/I" );
 
+  cafMVA->Branch("ND_Ehad_truedep", &ND_Ehad_truedep, "ND_Ehad_truedep/D");
+  cafMVA->Branch("ND_Ehad_out", &ND_Ehad_out, "ND_Ehad_out/D");
+  cafMVA->Branch("ND_Ehad_cont", &ND_Ehad_cont, "ND_Ehad_cont/D");
+  cafMVA->Branch("ND_Ehad_act", &ND_Ehad_act, "ND_Ehad_act/D");
   cafMVA->Branch("eP",        &eP,         "eP/D");
   cafMVA->Branch("eN",        &eN,         "eN/D");
   cafMVA->Branch("ePip",      &ePip,       "ePip/D");
   cafMVA->Branch("ePim",      &ePim,       "ePim/D");
   cafMVA->Branch("ePi0",      &ePi0,       "ePi0/D");
   cafMVA->Branch("eOther",    &eOther,     "eOther/D");
-  cafMVA->Branch("ND_Ehad_cont",&ND_Ehad_cont,"ND_Ehad_cont/D");  
   cafMVA->Branch("eRecoP",        &eRecoP,         "eRecoP/D");
   cafMVA->Branch("eRecoN",        &eRecoN,         "eRecoN/D");
   cafMVA->Branch("eRecoPip",      &eRecoPip,       "eRecoPip/D");
@@ -90,6 +93,8 @@ CAF::CAF( std::string filename, bool isGas )
 
   cafMVA->Branch( "Ev_reco", &Ev_reco, "Ev_reco/D" );
   cafMVA->Branch( "Elep_reco", &Elep_reco, "Elep_reco/D" );
+  cafMVA->Branch( "Ehad_reco", &Ehad_reco, "Ehad_reco/D" );
+  cafMVA->Branch( "Ehad_reco_nopile", &Ehad_reco_nopile, "Ehad_reco_nopile/D" );
   cafMVA->Branch( "theta_reco", &theta_reco, "theta_reco/D" );
   cafMVA->Branch( "reco_numu", &reco_numu, "reco_numu/I" );
   cafMVA->Branch( "reco_nue", &reco_nue, "reco_nue/I" );
@@ -178,11 +183,12 @@ void CAF::setToBS()
   LepMomX = -999.; LepMomY = -999.; LepMomZ = -999.; 
   LepE = -999.; LepNuAngle = -999.;
   nP = 0; nN = 0; nipip = 0; nipim = 0; nipi0 = 0; nikp = 0; nikm = 0; nik0 = 0; niem = 0; niother = 0; nNucleus = 0; nUNKNOWN = 0;
-  eP = 0.; eN = 0.; ePip = 0.; ePim = 0.; ePi0 = 0.; eOther = 0.; ND_Ehad_cont = 0.;
+  ND_Ehad_truedep = 0.; ND_Ehad_out = 0.; ND_Ehad_cont = 0.; ND_Ehad_act = 0.;
+  eP = 0.; eN = 0.; ePip = 0.; ePim = 0.; ePi0 = 0.; eOther = 0.;
   eRecoP = 0.; eRecoN = 0.; eRecoPip = 0.; eRecoPim = 0.; eRecoPi0 = 0.; eRecoOther = 0.;
   vtx_x = -9999.; vtx_y = -9999.; vtx_z = -9999.;
   det_x = -9999.;
-  Ev_reco = 0.; Elep_reco = 0.; theta_reco = 0.;
+  Ev_reco = 0.; Elep_reco = 0.; Ehad_reco = 0.; Ehad_reco_nopile = 0.; theta_reco = 0.;
   reco_numu = 0; reco_nue = 0; reco_nc = 0; reco_q = 0;
   muon_contained = 0; muon_tracker = 0; muon_ecal = 0; muon_exit = 0; reco_lepton_pdg = 0;
   Ehad_veto = 0.;

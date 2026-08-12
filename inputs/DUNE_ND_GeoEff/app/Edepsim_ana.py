@@ -224,6 +224,16 @@ nd_fd_throws_passed = array('i', [0])
 myEvents.Branch('nd_fd_throws_passed', nd_fd_throws_passed, 'nd_fd_throws_passed/I')
 
 ###########################
+# FD edep acounting
+###########################
+FD_Ehad_truedep = array('f', [0])
+myEvents.Branch('FD_Ehad_truedep', FD_Ehad_truedep, 'FD_Ehad_truedep/F')
+FD_Ehad_out = array('f', [0])
+myEvents.Branch('FD_Ehad_out', FD_Ehad_out, 'FD_Ehad_out/F')
+FD_Ehad_cont = array('f', [0])
+myEvents.Branch('FD_Ehad_cont', FD_Ehad_cont, 'FD_Ehad_cont/F')
+
+###########################
 # Loop over edepsim events
 ##########################
 entry_counter = 0
@@ -269,6 +279,7 @@ for jentry in range(entries):
     nd_vtx_cm_nonecc[0] = 0; nd_vtx_cm_nonecc[1] = 0; nd_vtx_cm_nonecc[2] = 0;
     fd_vtx_cm_pair_nd_nonecc[0] = 0; fd_vtx_cm_pair_nd_nonecc[1] = 0; fd_vtx_cm_pair_nd_nonecc[2] = 0;
     nd_fd_throws_passed[0] = 0
+    FD_Ehad_truedep[0] = 0; FD_Ehad_out[0] = 0; FD_Ehad_cont[0] = 0;
 
     for primary in event.Primaries:
         #print("number of particles: ", primary.Particles.size())
@@ -703,6 +714,27 @@ for jentry in range(entries):
                             print ("Found paired fd-nd non ecc event")
 
                             nd_fd_throws_passed[0] = 1
+                            
+                            #################################
+                            # Calculate FD Ehad info
+                            #################################
+                            ehad_truedep = 0.
+                            ehad_cont = 0.
+                            ehad_out = 0.
+                            for trkID, xstart, ystart, zstart, xstop, ystop, zstop, edep, pdg in zip(
+                                all_dep_trkID_list, fdthrowresultall_start_pair_nd_nonecc.thrownEdepspos[0][0,:], fdthrowresultall_start_pair_nd_nonecc.thrownEdepspos[0][1,:], fdthrowresultall_start_pair_nd_nonecc.thrownEdepspos[0][2,:],
+                                fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][0,:], fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][1,:], fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][2,:],
+                                all_edep_list, all_dep_pdg_list):
+                                # Is it a hadronic deposit? (not lepton)
+                                if IsFromPrimaryLep(trkID, trajectories_parentid, PrimaryLepTrackID) == False:
+                                    ehad_truedep += edep
+                                    # Now check for containment
+                                    if xstart-FDActiveVol_min[0] > 0 and xstart-FDActiveVol_max[0] < 0 and \
+                                    ystart-FDActiveVol_min[1] > 0 and ystart-FDActiveVol_max[1] < 0 and \
+                                    zstart-FDActiveVol_min[2] > 0 and zstart-FDActiveVol_max[2] < 0:
+                                        ehad_cont += edep
+                                    else:
+                                        ehad_out += edep
 
                             #################################
                             # Unpack info and store to output
@@ -749,6 +781,11 @@ for jentry in range(entries):
                             fd_deps_stop_y_cm_pair_nd_nonecc[:nEdeps[0]] = np.array(fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][1,:], dtype=np.float32)
                             fd_deps_stop_z_cm_pair_nd_nonecc[:nEdeps[0]] = np.array(fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][2,:], dtype=np.float32)
 
+                            # FD Ehad accounting
+                            FD_Ehad_truedep[0] = ehad_truedep
+                            FD_Ehad_cont[0] = ehad_cont
+                            FD_Ehad_out[0] = ehad_out
+                            
                             # Break the while loop, move on to next evt
                             print ("Paired data saved, breaking fd throw loop")
                             break

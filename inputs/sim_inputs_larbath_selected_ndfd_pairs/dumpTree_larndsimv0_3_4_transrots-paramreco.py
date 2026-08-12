@@ -24,6 +24,10 @@ segments_dtype = np.dtype([("eventID", "u4"), ("trackID", "u4"), ("uniqID", "u4"
 
 vertices_dtype = np.dtype([("eventID","u4"),("x_vert","f4"),("y_vert","f4"),("z_vert","f4")])
 
+nd_ehad_dtype = np.dtype([("eventID", "u4"), ("nd_ehad_truedep", "f4"), ("nd_ehad_out", "f4"), ("nd_ehad_cont", "f4"), ("nd_ehad_act", "f4")])
+
+fd_ehad_dtype = np.dtype([("eventID", "u4"), ("fd_ehad_truedep", "f4"), ("fd_ehad_out", "f4"), ("fd_ehad_cont", "f4")])
+
 depos_dtype = np.dtype([("eventID", "u4"), ("uniqID", "u4"),
                         ("x_start", "f4"), ("x_end", "f4"), ("x", "f4"),
                         ("y_start", "f4"), ("y_end", "f4"), ("y", "f4"),
@@ -50,7 +54,7 @@ paramreco_dtype = np.dtype([("eventID", "u4"), ("cafTree_event", "u4"),
                             ("nNucleus", "u4"), ("nUNKNOWN", "u4"),
                             ("eP", "f4"), ("eN", "f4"),
                             ("ePip", "f4"), ("ePim", "f4"), ("ePi0", "f4"), ("eOther", "f4"),
-                            ("ND_Ehad_cont", "f4"),
+                            ("ND_Ehad_reco", "f4"), ("ND_Ehad_reco_nopile", "f4"),
                             ("eRecoP", "f4"), ("eRecoN", "f4"),
                             ("eRecoPip", "f4"), ("eRecoPim", "f4"), ("eRecoPi0", "f4"),
                             ("eRecoOther", "f4"), ("ePileup", "f4"),
@@ -88,10 +92,13 @@ def initHDF5File(output_file, paramreco):
     with h5py.File(output_file, 'w') as f:
         f.create_dataset('segments', (0,), dtype=segments_dtype, maxshape=(None,))
         f.create_dataset('vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
+        f.create_dataset('fd_ehad', (0,), dtype=fd_ehad_dtype, maxshape=(None,))
+        f.create_dataset('fd_ehad_trim', (0,), dtype=fd_ehad_dtype, maxshape=(None,))
         f.create_dataset('fd_deps', (0,), dtype=depos_dtype, maxshape=(None,))
         f.create_dataset('fd_deps_trim', (0,), dtype=depos_dtype, maxshape=(None,))
         f.create_dataset('fd_vertices', (0,), dtype=vertices_dtype, maxshape=(None,))
         if paramreco:
+            f.create_dataset("nd_ehad", (0,), dtype=nd_ehad_dtype, maxshape=(None,))
             f.create_dataset('nd_paramreco', (0,), dtype=paramreco_dtype, maxshape=(None,))
             f.create_dataset('nd_paramreco_part', (0,), dtype=paramreco_part_dtype, maxshape=(None,))
         f.create_dataset('primaries', (0,), dtype=primaries_dtype, maxshape=(None,))
@@ -99,11 +106,11 @@ def initHDF5File(output_file, paramreco):
 
 # Resize HDF5 file and save output arrays
 def updateHDF5File(
-    output_file, segments, vertices, fd_deps, fd_deps_trim, fd_vertices, nd_paramreco, nd_paramreco_part, primaries, lepton
+    output_file, segments, vertices, fd_deps, fd_deps_trim, fd_vertices, fd_ehad, fd_ehad_trim, nd_ehad, nd_paramreco, nd_paramreco_part, primaries, lepton
 ):
     if any([
         len(segments), len(vertices), len(fd_deps), len(fd_deps_trim), len(fd_vertices), 
-        len(nd_paramreco), len(nd_paramreco_part), len(primaries), len(lepton)
+        len(fd_ehad), len(fd_ehad_trim), len(nd_ehad), len(nd_paramreco), len(nd_paramreco_part), len(primaries), len(lepton)
     ]):
         with h5py.File(output_file, 'a') as f:
             if len(segments):
@@ -130,6 +137,21 @@ def updateHDF5File(
                 nvert = len(f['fd_vertices'])
                 f['fd_vertices'].resize((nvert+len(fd_vertices),))
                 f['fd_vertices'][nvert:] = fd_vertices
+    
+            if len(fd_ehad):
+                nfd_ehad = len(f['fd_ehad'])
+                f['fd_ehad'].resize((nfd_ehad+len(fd_ehad),))
+                f['fd_ehad'][nfd_ehad:] = fd_ehad
+
+            if len(fd_ehad_trim):
+                nfd_ehad_trim = len(f['fd_ehad_trim'])
+                f['fd_ehad_trim'].resize((nfd_ehad_trim+len(fd_ehad_trim),))
+                f['fd_ehad_trim'][nfd_ehad_trim:] = fd_ehad_trim
+
+            if len(nd_ehad):
+                nnd_ehad = len(f['nd_ehad'])
+                f['nd_ehad'].resize((nnd_ehad+len(nd_ehad),))
+                f['nd_ehad'][nnd_ehad:] = nd_ehad
 
             if len(nd_paramreco):
                 nprec = len(f['nd_paramreco'])
@@ -180,6 +202,9 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
     fd_depos_trim_list = list()
     vertices_list = list()
     fd_vertices_list = list()
+    nd_ehad_list = list()
+    fd_ehad_list = list()
+    fd_ehad_list_trim = list()
     param_reco_list = list()
     param_reco_part_list = list()
     primaries_list = list()
@@ -369,6 +394,22 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
             dep_trim[i_dep]["uniqID"] = i_dep
             dep_trim[i_dep]["outsideNDLAr"] = -1
         fd_depos_trim_list.append(dep_trim)
+        
+        # Dump the FD Ehad energies
+        fd_ehad = np.empty(1, dtype=fd_ehad_dtype)
+        fd_ehad["eventID"] = i_event
+        fd_ehad["fd_ehad_truedep"] = event.FD_Ehad_truedep * 0.001
+        fd_ehad["fd_ehad_out"] = event.FD_Ehad_out * 0.001
+        fd_ehad["fd_ehad_cont"] = event.FD_Ehad_cont * 0.001
+        fd_ehad_list.append(fd_ehad)
+        
+        # Dump the trimmed FD Ehad energies
+        fd_ehad_trim = np.empty(1, dtype=fd_ehad_dtype)
+        fd_ehad_trim["eventID"] = i_event
+        fd_ehad_trim["fd_ehad_truedep"] = event_trim.FD_Ehad_truedep * 0.001
+        fd_ehad_trim["fd_ehad_out"] = event_trim.FD_Ehad_out * 0.001
+        fd_ehad_trim["fd_ehad_cont"] = event_trim.FD_Ehad_cont * 0.001
+        fd_ehad_list_trim.append(fd_ehad_trim)
 
         # Dump genie primaries
         primaries = np.empty(event.Genie_nParts, dtype=primaries_dtype)
@@ -404,6 +445,7 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
         if param_reco_file is not None:
             prec_event = next(paramrecoTree_itr)
             prec = np.empty(1, dtype=paramreco_dtype)
+            nd_ehad_prec = np.empty(1, dtype=nd_ehad_dtype)
             prec["eventID"] = i_event
             prec["cafTree_event"] = prec_event.event
             prec["isFHC"] = prec_event.isFHC
@@ -443,7 +485,8 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
             prec["ePim"] = prec_event.ePim
             prec["ePi0"] = prec_event.ePi0
             prec["eOther"] = prec_event.eOther
-            prec["ND_Ehad_cont"] = prec_event.ND_Ehad_cont
+            prec["ND_Ehad_reco"] = prec_event.Ehad_reco
+            prec["ND_Ehad_reco_nopile"] = prec_event.Ehad_reco_nopile
             prec["eRecoP"] = prec_event.eRecoP
             prec["eRecoN"] = prec_event.eRecoN
             prec["eRecoPip"] = prec_event.eRecoPip
@@ -471,8 +514,16 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
             prec["muon_endpoint_y"] = prec_event.muon_endpoint[1]
             prec["muon_endpoint_z"] = prec_event.muon_endpoint[2]
             prec["Ehad_veto"] = prec_event.Ehad_veto
-            param_reco_list.append(prec)
             
+            nd_ehad_prec["eventID"] = i_event
+            nd_ehad_prec["nd_ehad_truedep"] = prec_event.ND_Ehad_truedep
+            nd_ehad_prec["nd_ehad_out"] = prec_event.ND_Ehad_out
+            nd_ehad_prec["nd_ehad_cont"] = prec_event.ND_Ehad_cont
+            nd_ehad_prec["nd_ehad_act"] = prec_event.ND_Ehad_act
+            
+            param_reco_list.append(prec)
+            nd_ehad_list.append(nd_ehad_prec)
+
         # Save the individual particles' reco quantities if param reco provided
         if param_reco_file is not None:
             reco_primaries = np.empty(prec_event.nFSP, dtype=paramreco_part_dtype)            
@@ -507,6 +558,9 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
         np.concatenate(fd_depos_list, axis=0) if fd_depos_list else np.empty((0,)),
         np.concatenate(fd_depos_trim_list, axis=0) if fd_depos_trim_list else np.empty((0,)),
         np.concatenate(fd_vertices_list, axis=0) if fd_vertices_list else np.empty((0,)),
+        np.concatenate(fd_ehad_list, axis=0) if fd_ehad_list else np.empty((0,)),
+        np.concatenate(fd_ehad_list_trim, axis=0) if fd_ehad_list_trim else np.empty((0,)),
+        np.concatenate(nd_ehad_list, axis=0) if nd_ehad_list else np.empty((0,)),
         np.concatenate(param_reco_list, axis=0) if param_reco_list else np.empty((0,)),
         np.concatenate(param_reco_part_list, axis=0) if param_reco_part_list else np.empty((0,)),
         np.concatenate(primaries_list, axis=0) if primaries_list else np.empty((0,)),

@@ -182,7 +182,8 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
 {
   // read in dumpTree output file
   int ievt, lepPdg, muonReco, nFS;
-  float lepKE, muGArLen, muECalLen, hadTot, hadCollar, ND_Ehad_cont;
+  float lepKE, muGArLen, muECalLen;
+  float hadTrue, hadOut, ND_Ehad_cont, hadAct, hadCollar;
   float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
   float p3lep[3], vtx[3], muonExitPt[3], muonExitMom[3];
   int fsPdg[100];
@@ -194,7 +195,10 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "lepKE", &lepKE );
   tree->SetBranchAddress( "muGArLen", &muGArLen );
   tree->SetBranchAddress( "muECalLen", &muECalLen );
-  tree->SetBranchAddress( "hadTot", &hadTot );
+  tree->SetBranchAddress( "hadTrue", &hadTrue );
+  tree->SetBranchAddress( "hadOut", &hadOut );
+  tree->SetBranchAddress( "ND_Ehad_cont", &ND_Ehad_cont );
+  tree->SetBranchAddress( "hadAct", &hadAct );
   tree->SetBranchAddress( "hadCollar", &hadCollar );
   tree->SetBranchAddress( "hadP", &hadP );
   tree->SetBranchAddress( "hadN", &hadN );
@@ -202,7 +206,6 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "hadPim", &hadPim );
   tree->SetBranchAddress( "hadPi0", &hadPi0 );
   tree->SetBranchAddress( "hadOther", &hadOther );
-  tree->SetBranchAddress( "ND_Ehad_cont", &ND_Ehad_cont );
   tree->SetBranchAddress( "p3lep", p3lep );
   tree->SetBranchAddress( "vtx", vtx );
   tree->SetBranchAddress( "muonExitPt", muonExitPt );
@@ -276,13 +279,21 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
     caf.niother = 0;
     caf.nNucleus = 0;
     caf.nUNKNOWN = 0; // there is an "other" category so this never gets used
+
+    // The true deposited hadronic energy here is the true deposited energy 
+    // anywhere in the geometry. It does not include the nuclear recoil 
+    // energy, nor binding energy. Therefore, ND_Ehad_truedep + ND_Elep_true != Ev_true
+    caf.ND_Ehad_truedep = hadTrue * 0.001;
+    caf.ND_Ehad_out = hadOut * 0.001;
+    caf.ND_Ehad_cont = ND_Ehad_cont * 0.001;
+    caf.ND_Ehad_act = hadAct * 0.001;
+    
     caf.eP = 0.;
     caf.eN = 0.;
     caf.ePip = 0.;
     caf.ePim = 0.;
     caf.ePi0 = 0.;
     caf.eOther = 0.;
-    caf.ND_Ehad_cont = 0.;
     caf.eRecoP = 0.;
     caf.eRecoN = 0.;
     caf.eRecoPip = 0.;
@@ -425,7 +436,7 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
       }
 
       // Hadronic energy calorimetrically
-      caf.Ev_reco = caf.Elep_reco + hadTot*0.001;
+      caf.Ev_reco = caf.Elep_reco + hadAct*0.001;
       caf.nFSP = nFS;
       caf.Ehad_veto = hadCollar;
       caf.eRecoP = hadP*0.001;
@@ -453,6 +464,9 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
       caf.pileup_energy = 0.;
       if( rando->Rndm() < par.pileup_frac ) caf.pileup_energy = rando->Rndm() * par.pileup_max;
       caf.Ev_reco += caf.pileup_energy;
+
+      caf.Ehad_reco = caf.Ev_reco - caf.Elep_reco;
+      caf.Ehad_reco_nopile = hadAct * 0.001;
     } else {
       // gas TPC: FS particle loop look for long enough tracks and smear momenta
       caf.Ev_reco = 0.;
