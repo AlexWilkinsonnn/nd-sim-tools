@@ -226,12 +226,16 @@ myEvents.Branch('nd_fd_throws_passed', nd_fd_throws_passed, 'nd_fd_throws_passed
 ###########################
 # FD edep acounting
 ###########################
-FD_Ehad_truedep = array('f', [0])
-myEvents.Branch('FD_Ehad_truedep', FD_Ehad_truedep, 'FD_Ehad_truedep/F')
-FD_Ehad_out = array('f', [0])
-myEvents.Branch('FD_Ehad_out', FD_Ehad_out, 'FD_Ehad_out/F')
-FD_Ehad_cont = array('f', [0])
-myEvents.Branch('FD_Ehad_cont', FD_Ehad_cont, 'FD_Ehad_cont/F')
+FD_TrueHadEdep = array('f', [0])
+myEvents.Branch('FD_TrueHadEdep', FD_TrueHadEdep, 'FD_TrueHadEdep/F')
+FD_TrueHadOutEdep = array('f', [0])
+myEvents.Branch('FD_TrueHadOutEdep', FD_TrueHadOutEdep, 'FD_TrueHadOutEdep/F')
+FD_TrueHadContEdep = array('f', [0])
+myEvents.Branch('FD_TrueHadContEdep', FD_TrueHadContEdep, 'FD_TrueHadContEdep/F')
+FD_TrueHadActEdep = array('f', [0])
+myEvents.Branch('FD_TrueHadActEdep', FD_TrueHadActEdep, 'FD_TrueHadActEdep/F')
+FD_TrueHadEdepCollar = array('f', [0])
+myEvents.Branch('FD_TrueHadEdepCollar', FD_TrueHadEdepCollar, 'FD_TrueHadEdepCollar/F')
 
 ###########################
 # Loop over edepsim events
@@ -279,7 +283,7 @@ for jentry in range(entries):
     nd_vtx_cm_nonecc[0] = 0; nd_vtx_cm_nonecc[1] = 0; nd_vtx_cm_nonecc[2] = 0;
     fd_vtx_cm_pair_nd_nonecc[0] = 0; fd_vtx_cm_pair_nd_nonecc[1] = 0; fd_vtx_cm_pair_nd_nonecc[2] = 0;
     nd_fd_throws_passed[0] = 0
-    FD_Ehad_truedep[0] = 0; FD_Ehad_out[0] = 0; FD_Ehad_cont[0] = 0;
+    FD_TrueHadEdep[0] = 0; FD_TrueHadOutEdep[0] = 0; FD_TrueHadContEdep[0] = 0;
 
     for primary in event.Primaries:
         #print("number of particles: ", primary.Particles.size())
@@ -721,6 +725,8 @@ for jentry in range(entries):
                             ehad_truedep = 0.
                             ehad_cont = 0.
                             ehad_out = 0.
+                            ehad_act = 0.
+                            ehad_collar = 0.
                             for trkID, xstart, ystart, zstart, xstop, ystop, zstop, edep, pdg in zip(
                                 all_dep_trkID_list, fdthrowresultall_start_pair_nd_nonecc.thrownEdepspos[0][0,:], fdthrowresultall_start_pair_nd_nonecc.thrownEdepspos[0][1,:], fdthrowresultall_start_pair_nd_nonecc.thrownEdepspos[0][2,:],
                                 fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][0,:], fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][1,:], fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][2,:],
@@ -735,6 +741,21 @@ for jentry in range(entries):
                                         ehad_cont += edep
                                     else:
                                         ehad_out += edep
+                                    # Check for inclusion in an active region
+                                    in_active = xstart-FDActiveVol_min[0] > 0 and xstart-FDActiveVol_max[0] < 0 and \
+                                    ystart-FDActiveVol_min[1] > 0 and ystart-FDActiveVol_max[1] < 0 and \
+                                    zstart-FDActiveVol_min[2] > 0 and zstart-FDActiveVol_max[2] < 0
+                                    if in_active:
+                                        ehad_act += edep
+                                    # Check for location in veto region
+                                    in_collar = (FDActiveVol_min[0] < xstart < FDActiveVol_min[0] + 30 or
+                                                 FDActiveVol_min[1] < ystart < FDActiveVol_min[1] + 30 or
+                                                 FDActiveVol_min[2] < zstart < FDActiveVol_min[2] + 30 or
+                                                 FDActiveVol_max[0] - 30 < xstart < FDActiveVol_max[0] or
+                                                 FDActiveVol_max[1] - 30 < ystart < FDActiveVol_max[1] or
+                                                 FDActiveVol_max[2] - 30 < zstart < FDActiveVol_max[2])
+                                    if in_active and in_collar:
+                                        ehad_collar += edep
 
                             #################################
                             # Unpack info and store to output
@@ -782,9 +803,11 @@ for jentry in range(entries):
                             fd_deps_stop_z_cm_pair_nd_nonecc[:nEdeps[0]] = np.array(fdthrowresultall_stop_pair_nd_nonecc.thrownEdepspos[0][2,:], dtype=np.float32)
 
                             # FD Ehad accounting
-                            FD_Ehad_truedep[0] = ehad_truedep
-                            FD_Ehad_cont[0] = ehad_cont
-                            FD_Ehad_out[0] = ehad_out
+                            FD_TrueHadEdep[0] = ehad_truedep
+                            FD_TrueHadContEdep[0] = ehad_cont
+                            FD_TrueHadOutEdep[0] = ehad_out
+                            FD_TrueHadActEdep[0] = ehad_act
+                            FD_TrueHadEdepCollar[0] = ehad_collar
                             
                             # Break the while loop, move on to next evt
                             print ("Paired data saved, breaking fd throw loop")

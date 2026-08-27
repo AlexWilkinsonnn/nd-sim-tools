@@ -92,16 +92,18 @@ def loop( evt, tgeo, tout ):
             t_muonReco[0] = -1;
             t_muon_endVolName.replace(0, ROOT.std.string.npos, "")
             t_muGArLen[0]=0.0;
-            t_hadTrue[0] = 0.
-            t_hadOut[0] = 0.
-            t_ND_Ehad_cont[0] = 0.
-            t_hadAct[0] = 0.
-            t_hadP[0] = 0.
-            t_hadN[0] = 0.
-            t_hadPip[0] = 0.
-            t_hadPim[0] = 0.
-            t_hadPi0[0] = 0.
-            t_hadOther[0] = 0.
+            t_hadTrue[0]=0.0
+            t_ND_TrueHadEdep[0] = 0.
+            t_ND_TrueHadOutEdep[0] = 0.
+            t_ND_TrueHadContEdep[0] = 0.
+            t_ND_TrueHadActEdep[0] = 0.
+            t_ND_TruePEdepAct[0] = 0.
+            t_ND_TrueNEdepAct[0] = 0.
+            t_ND_TruePipEdepAct[0] = 0.
+            t_ND_TruePimEdepAct[0] = 0.
+            t_ND_TruePi0EdepAct[0] = 0.
+            t_ND_TrueOtherEdepAct[0] = 0.
+            t_ND_EhadReco[0] = 0.
             t_hadCollar[0] = 0.
             t_nFS[0] = 0
             ## done
@@ -137,6 +139,14 @@ def loop( evt, tgeo, tout ):
                 t_fsPy[nfsp] = particle.Momentum[1]
                 t_fsPz[nfsp] = particle.Momentum[2]
                 t_fsE[nfsp] = e
+                if((abs(particle.PDGCode) < 11 or abs(particle.PDGCode) > 16) and
+                   abs(particle.PDGCode) != 2212 and abs(particle.PDGCode != 2112)):  
+                    # If it's a hadron but not a proton or neutron
+                    t_hadTrue[0] += e
+                elif(abs(particle.PDGCode) == 2212):
+                    t_hadTrue[0] += (e - 938.27)
+                elif(abs(particle.PDGCode) == 2112):
+                    t_hadTrue[0] += (e - 939.57)
                 fsParticleIdx[particle.TrackId] = nfsp
                 nfsp += 1
                 pdg = particle.PDGCode
@@ -344,7 +354,7 @@ def loop( evt, tgeo, tout ):
                         # This is a particle that is directly due to a 
                         # gamma from a pi0, so add it to the dictionary.
                         tid_to_gamma[tid] = mom
-                # We now have a trah, and the trackID (tid) of its 
+                # We now have a traj, and the trackID (tid) of its 
                 # ultimate mother. Record the PDG in the dictionary and 
                 # set the energy counter for that trajectory to 0.0
                 traj_to_pdg[traj] = event.Trajectories[tid].PDGCode
@@ -450,12 +460,12 @@ def loop( evt, tgeo, tout ):
                     # Determine primary particle
                     pdg = traj_to_pdg[traj]
                     if pdg in [11, -11, 13, -13]: continue # lepton
-                    elif pdg == 2212: t_hadP[0] += hit.EnergyDeposit
-                    elif pdg == 2112: t_hadN[0] += hit.EnergyDeposit
-                    elif pdg == 211: t_hadPip[0] += hit.EnergyDeposit
-                    elif pdg == -211: t_hadPim[0] += hit.EnergyDeposit
-                    elif pdg == 111: t_hadPi0[0] += hit.EnergyDeposit
-                    else: t_hadOther[0] += hit.EnergyDeposit
+                    elif pdg == 2212: t_ND_TruePEdepAct[0] += hit.EnergyDeposit
+                    elif pdg == 2112: t_ND_TrueNEdepAct[0] += hit.EnergyDeposit
+                    elif pdg == 211: t_ND_TruePipEdepAct[0] += hit.EnergyDeposit
+                    elif pdg == -211: t_ND_TruePimEdepAct[0] += hit.EnergyDeposit
+                    elif pdg == 111: t_ND_TruePi0EdepAct[0] += hit.EnergyDeposit
+                    else: t_ND_TrueOtherEdepAct[0] += hit.EnergyDeposit
 
             # Calculate Ehad true, Ehad out, and Ehad cont
             for hit in hitsCont:
@@ -467,10 +477,12 @@ def loop( evt, tgeo, tout ):
             for hit in hitsTrue:
                 if hit.PrimaryId != ileptraj:
                     true_energy += hit.EnergyDeposit
-            t_hadAct[0] = act_energy
-            t_ND_Ehad_cont[0] = cont_energy
-            t_hadOut[0] = out_energy
-            t_hadTrue[0] = true_energy
+            t_ND_TrueHadActEdep[0] = act_energy
+            t_ND_TrueHadContEdep[0] = cont_energy
+            t_ND_TrueHadOutEdep[0] = out_energy
+            t_ND_TrueHadEdep[0] = true_energy
+            # For reco, assume we reconstruct everything in the active region
+            t_ND_EhadReco[0] = act_energy
             t_hadCollar[0] = collar_energy
 
             for i in range(nfsp):
@@ -566,24 +578,28 @@ if __name__ == "__main__":
     tout.Branch('muECalLen',t_muECalLen,'muECalLen/F')
     t_hadTrue = array('f', [0.] )
     tout.Branch('hadTrue', t_hadTrue, 'hadTrue/F' )
-    t_hadOut = array('f', [0.] )
-    tout.Branch('hadOut', t_hadOut, 'hadOut/F' )
-    t_ND_Ehad_cont = array('f', [0.] )
-    tout.Branch('ND_Ehad_cont', t_ND_Ehad_cont, 'ND_Ehad_cont/F' )
-    t_hadAct = array('f', [0.] )
-    tout.Branch('hadAct', t_hadAct, 'hadAct/F' )
-    t_hadP = array('f', [0.] )
-    tout.Branch('hadP', t_hadP, 'hadP/F' )
-    t_hadN = array('f', [0.] )
-    tout.Branch('hadN', t_hadN, 'hadN/F' )
-    t_hadPip = array('f', [0.] )
-    tout.Branch('hadPip', t_hadPip, 'hadPip/F' )
-    t_hadPim = array('f', [0.] )
-    tout.Branch('hadPim', t_hadPim, 'hadPim/F' )
-    t_hadPi0 = array('f', [0.] )
-    tout.Branch('hadPi0', t_hadPi0, 'hadPi0/F' )
-    t_hadOther = array('f', [0.] )
-    tout.Branch('hadOther', t_hadOther, 'hadOther/F' )
+    t_ND_TrueHadEdep = array('f', [0.] )
+    tout.Branch('ND_TrueHadEdep', t_ND_TrueHadEdep, 'ND_TrueHadEdep/F' )
+    t_ND_TrueHadOutEdep = array('f', [0.] )
+    tout.Branch('ND_TrueHadOutEdep', t_ND_TrueHadOutEdep, 'ND_TrueHadOutEdep/F' )
+    t_ND_TrueHadContEdep = array('f', [0.] )
+    tout.Branch('ND_TrueHadContEdep', t_ND_TrueHadContEdep, 'ND_TrueHadContEdep/F' )
+    t_ND_TrueHadActEdep = array('f', [0.] )
+    tout.Branch('ND_TrueHadActEdep', t_ND_TrueHadActEdep, 'ND_TrueHadActEdep/F' )
+    t_ND_TruePEdepAct = array('f', [0.] )
+    tout.Branch('ND_TruePEdepAct', t_ND_TruePEdepAct, 'ND_TruePEdepAct/F' )
+    t_ND_TrueNEdepAct = array('f', [0.] )
+    tout.Branch('ND_TrueNEdepAct', t_ND_TrueNEdepAct, 'ND_TrueNEdepAct/F' )
+    t_ND_TruePipEdepAct = array('f', [0.] )
+    tout.Branch('ND_TruePipEdepAct', t_ND_TruePipEdepAct, 'ND_TruePipEdepAct/F' )
+    t_ND_TruePimEdepAct = array('f', [0.] )
+    tout.Branch('ND_TruePimEdepAct', t_ND_TruePimEdepAct, 'ND_TruePimEdepAct/F' )
+    t_ND_TruePi0EdepAct = array('f', [0.] )
+    tout.Branch('ND_TruePi0EdepAct', t_ND_TruePi0EdepAct, 'ND_TruePi0EdepAct/F' )
+    t_ND_TrueOtherEdepAct = array('f', [0.] )
+    tout.Branch('ND_TrueOtherEdepAct', t_ND_TrueOtherEdepAct, 'ND_TrueOtherEdepAct/F' )
+    t_ND_EhadReco = array('f', [0.] )
+    tout.Branch('ND_EhadReco', t_ND_EhadReco, 'ND_EhadReco/F' )
     t_hadCollar = array('f', [0.] )
     tout.Branch('hadCollar', t_hadCollar, 'hadCollar/F' )
     t_nFS = array('i',[0])

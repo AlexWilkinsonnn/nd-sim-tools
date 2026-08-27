@@ -183,8 +183,8 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   // read in dumpTree output file
   int ievt, lepPdg, muonReco, nFS;
   float lepKE, muGArLen, muECalLen;
-  float hadTrue, hadOut, ND_Ehad_cont, hadAct, hadCollar;
-  float hadP, hadN, hadPip, hadPim, hadPi0, hadOther;
+  float ND_EhadReco, hadTrue, ND_TrueHadEdep, ND_TrueHadOutEdep, ND_TrueHadContEdep, ND_TrueHadActEdep, hadCollar;
+  float ND_TruePEdepAct, ND_TrueNEdepAct, ND_TruePipEdepAct, ND_TruePimEdepAct, ND_TruePi0EdepAct, ND_TrueOtherEdepAct;
   float p3lep[3], vtx[3], muonExitPt[3], muonExitMom[3];
   int fsPdg[100];
   float fsPx[100], fsPy[100], fsPz[100], fsE[100], fsTrkLen[100], fsTrkLenPerp[100];
@@ -195,17 +195,19 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
   tree->SetBranchAddress( "lepKE", &lepKE );
   tree->SetBranchAddress( "muGArLen", &muGArLen );
   tree->SetBranchAddress( "muECalLen", &muECalLen );
+  tree->SetBranchAddress( "ND_EhadReco", &ND_EhadReco );
   tree->SetBranchAddress( "hadTrue", &hadTrue );
-  tree->SetBranchAddress( "hadOut", &hadOut );
-  tree->SetBranchAddress( "ND_Ehad_cont", &ND_Ehad_cont );
-  tree->SetBranchAddress( "hadAct", &hadAct );
+  tree->SetBranchAddress( "ND_TrueHadEdep", &ND_TrueHadEdep );
+  tree->SetBranchAddress( "ND_TrueHadOutEdep", &ND_TrueHadOutEdep );
+  tree->SetBranchAddress( "ND_TrueHadContEdep", &ND_TrueHadContEdep );
+  tree->SetBranchAddress( "ND_TrueHadActEdep", &ND_TrueHadActEdep );
+  tree->SetBranchAddress( "ND_TruePEdepAct", &ND_TruePEdepAct );
+  tree->SetBranchAddress( "ND_TrueNEdepAct", &ND_TrueNEdepAct );
+  tree->SetBranchAddress( "ND_TruePipEdepAct", &ND_TruePipEdepAct );
+  tree->SetBranchAddress( "ND_TruePimEdepAct", &ND_TruePimEdepAct );
+  tree->SetBranchAddress( "ND_TruePi0EdepAct", &ND_TruePi0EdepAct );
+  tree->SetBranchAddress( "ND_TrueOtherEdepAct", &ND_TrueOtherEdepAct );
   tree->SetBranchAddress( "hadCollar", &hadCollar );
-  tree->SetBranchAddress( "hadP", &hadP );
-  tree->SetBranchAddress( "hadN", &hadN );
-  tree->SetBranchAddress( "hadPip", &hadPip );
-  tree->SetBranchAddress( "hadPim", &hadPim );
-  tree->SetBranchAddress( "hadPi0", &hadPi0 );
-  tree->SetBranchAddress( "hadOther", &hadOther );
   tree->SetBranchAddress( "p3lep", p3lep );
   tree->SetBranchAddress( "vtx", vtx );
   tree->SetBranchAddress( "muonExitPt", muonExitPt );
@@ -283,40 +285,40 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
     // The true deposited hadronic energy here is the true deposited energy 
     // anywhere in the geometry. It does not include the nuclear recoil 
     // energy, nor binding energy. Therefore, ND_Ehad_truedep + ND_Elep_true != Ev_true
-    caf.ND_Ehad_truedep = hadTrue * 0.001;
-    caf.ND_Ehad_out = hadOut * 0.001;
-    caf.ND_Ehad_cont = ND_Ehad_cont * 0.001;
-    caf.ND_Ehad_act = hadAct * 0.001;
+    caf.hadTrue = hadTrue * 0.001;
+    caf.ND_TrueHadEdep = ND_TrueHadEdep * 0.001;
+    caf.ND_TrueHadOutEdep = ND_TrueHadOutEdep * 0.001;
+    caf.ND_TrueHadContEdep = ND_TrueHadContEdep * 0.001;
+    caf.ND_TrueHadActEdep = ND_TrueHadActEdep * 0.001;
     
-    caf.eP = 0.;
-    caf.eN = 0.;
-    caf.ePip = 0.;
-    caf.ePim = 0.;
-    caf.ePi0 = 0.;
-    caf.eOther = 0.;
-    caf.eRecoP = 0.;
-    caf.eRecoN = 0.;
-    caf.eRecoPip = 0.;
-    caf.eRecoPim = 0.;
-    caf.eRecoPi0 = 0.;
-    caf.eOther = 0.;
+    caf.eP_ke = 0.;
+    caf.eN_ke = 0.;
+    caf.ePip_ke = 0.;
+    caf.ePim_ke = 0.;
+    caf.ePi0_ke = 0.;
+    caf.eOther_ke = 0.;
+    caf.ND_eRecoP = 0.;
+    caf.ND_eRecoN = 0.;
+    caf.ND_eRecoPip = 0.;
+    caf.ND_eRecoPim = 0.;
+    caf.ND_eRecoPi0 = 0.;
     for( int i = 0; i < nFS; ++i ) {
       double ke = 0.001*(fsE[i] - sqrt(fsE[i]*fsE[i] - fsPx[i]*fsPx[i] - fsPy[i]*fsPy[i] - fsPz[i]*fsPz[i]));
       if( fsPdg[i] == caf.LepPDG ) {
         lepP4.SetPxPyPzE( fsPx[i]*0.001, fsPy[i]*0.001, fsPz[i]*0.001, fsE[i]*0.001 );
         caf.LepE = fsE[i]*0.001;
       }
-      else if( fsPdg[i] == 2212 ) {caf.nP++; caf.eP += ke;}
-      else if( fsPdg[i] == 2112 ) {caf.nN++; caf.eN += ke;}
-      else if( fsPdg[i] ==  211 ) {caf.nipip++; caf.ePip += ke;}
-      else if( fsPdg[i] == -211 ) {caf.nipim++; caf.ePim += ke;}
-      else if( fsPdg[i] ==  111 ) {caf.nipi0++; caf.ePi0 += ke;}
-      else if( fsPdg[i] ==  321 ) {caf.nikp++; caf.eOther += ke;}
-      else if( fsPdg[i] == -321 ) {caf.nikm++; caf.eOther += ke;}
-      else if( fsPdg[i] == 311 || fsPdg[i] == -311 || fsPdg[i] == 130 || fsPdg[i] == 310 ) {caf.nik0++; caf.eOther += ke;}
-      else if( fsPdg[i] ==   22 ) {caf.niem++; caf.eOther += ke;}
+      else if( fsPdg[i] == 2212 ) {caf.nP++; caf.eP_ke += ke;}
+      else if( fsPdg[i] == 2112 ) {caf.nN++; caf.eN_ke += ke;}
+      else if( fsPdg[i] ==  211 ) {caf.nipip++; caf.ePip_ke += ke;}
+      else if( fsPdg[i] == -211 ) {caf.nipim++; caf.ePim_ke += ke;}
+      else if( fsPdg[i] ==  111 ) {caf.nipi0++; caf.ePi0_ke += ke;}
+      else if( fsPdg[i] ==  321 ) {caf.nikp++; caf.eOther_ke += ke;}
+      else if( fsPdg[i] == -321 ) {caf.nikm++; caf.eOther_ke += ke;}
+      else if( fsPdg[i] == 311 || fsPdg[i] == -311 || fsPdg[i] == 130 || fsPdg[i] == 310 ) {caf.nik0++; caf.eOther_ke += ke;}
+      else if( fsPdg[i] ==   22 ) {caf.niem++; caf.eOther_ke += ke;}
       else if( fsPdg[i] > 1000000000 ) caf.nNucleus++;
-      else {caf.niother++; caf.eOther += ke;}
+      else {caf.niother++; caf.eOther_ke += ke;}
     }
 
     // true 4-momentum transfer
@@ -436,15 +438,15 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
       }
 
       // Hadronic energy calorimetrically
-      caf.Ev_reco = caf.Elep_reco + hadAct*0.001;
+      caf.Ev_reco = caf.Elep_reco + ND_EhadReco*0.001;
       caf.nFSP = nFS;
       caf.Ehad_veto = hadCollar;
-      caf.eRecoP = hadP*0.001;
-      caf.eRecoN = hadN*0.001;
-      caf.eRecoPip = hadPip*0.001;
-      caf.eRecoPim = hadPim*0.001;
-      caf.eRecoPi0 = hadPi0*0.001;
-      caf.eRecoOther = hadOther*0.001;
+      caf.ND_eRecoP = ND_TruePEdepAct*0.001;
+      caf.ND_eRecoN = ND_TrueNEdepAct*0.001;
+      caf.ND_eRecoPip = ND_TruePipEdepAct*0.001;
+      caf.ND_eRecoPim = ND_TruePimEdepAct*0.001;
+      caf.ND_eRecoPi0 = ND_TruePi0EdepAct*0.001;
+      caf.ND_eRecoOther = ND_TrueOtherEdepAct*0.001;
 
       // Hadronic system reconstruction
       for(int i = 0; i < nFS; i++) {
@@ -459,14 +461,13 @@ void loop( CAF &caf, params &par, TTree * tree, TTree * gtree, std::string fhicl
         caf.fsTrkEndpointBall[i] = fsTrkEndpointBall[i]*0.001;
         caf.fsTrkCalo[i] = fsTrkCalo[i]*0.001;
       }
-      caf.ND_Ehad_cont = ND_Ehad_cont*0.001;
 
       caf.pileup_energy = 0.;
       if( rando->Rndm() < par.pileup_frac ) caf.pileup_energy = rando->Rndm() * par.pileup_max;
       caf.Ev_reco += caf.pileup_energy;
 
       caf.Ehad_reco = caf.Ev_reco - caf.Elep_reco;
-      caf.Ehad_reco_nopile = hadAct * 0.001;
+      caf.Ehad_reco_nopile = ND_TrueHadActEdep * 0.001;
     } else {
       // gas TPC: FS particle loop look for long enough tracks and smear momenta
       caf.Ev_reco = 0.;

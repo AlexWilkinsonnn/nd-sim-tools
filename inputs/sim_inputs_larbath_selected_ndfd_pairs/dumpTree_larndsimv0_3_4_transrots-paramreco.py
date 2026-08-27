@@ -24,9 +24,19 @@ segments_dtype = np.dtype([("eventID", "u4"), ("trackID", "u4"), ("uniqID", "u4"
 
 vertices_dtype = np.dtype([("eventID","u4"),("x_vert","f4"),("y_vert","f4"),("z_vert","f4")])
 
-nd_ehad_dtype = np.dtype([("eventID", "u4"), ("nd_ehad_truedep", "f4"), ("nd_ehad_out", "f4"), ("nd_ehad_cont", "f4"), ("nd_ehad_act", "f4")])
+nd_ehad_dtype = np.dtype([
+    ("eventID", "u4"),
+    ("nd_true_had_edep", "f4"), ("nd_true_had_out_edep", "f4"),
+    ("nd_true_had_cont_edep", "f4"), ("nd_true_had_act_edep", "f4"),
+    ("hadTrue", "f4")
+])
 
-fd_ehad_dtype = np.dtype([("eventID", "u4"), ("fd_ehad_truedep", "f4"), ("fd_ehad_out", "f4"), ("fd_ehad_cont", "f4")])
+fd_ehad_dtype = np.dtype([
+    ("eventID", "u4"),
+    ("fd_true_had_edep", "f4"), ("fd_true_had_out_edep", "f4"),
+    ("fd_true_had_cont_edep", "f4"), ("fd_true_had_act_edep", "f4"),
+    ("fd_true_had_edep_collar", "f4"), ("hadTrue", "f4")
+])
 
 depos_dtype = np.dtype([("eventID", "u4"), ("uniqID", "u4"),
                         ("x_start", "f4"), ("x_end", "f4"), ("x", "f4"),
@@ -52,12 +62,12 @@ paramreco_dtype = np.dtype([("eventID", "u4"), ("cafTree_event", "u4"),
                             ("nikp", "u4"), ("nikm", "u4"), ("nik0", "u4"),
                             ("niem", "u4"), ("niother", "u4"),
                             ("nNucleus", "u4"), ("nUNKNOWN", "u4"),
-                            ("eP", "f4"), ("eN", "f4"),
-                            ("ePip", "f4"), ("ePim", "f4"), ("ePi0", "f4"), ("eOther", "f4"),
+                            ("eP_ke", "f4"), ("eN_ke", "f4"),
+                            ("ePip_ke", "f4"), ("ePim_ke", "f4"), ("ePi0_ke", "f4"), ("eOther_ke", "f4"),
                             ("ND_Ehad_reco", "f4"), ("ND_Ehad_reco_nopile", "f4"),
-                            ("eRecoP", "f4"), ("eRecoN", "f4"),
-                            ("eRecoPip", "f4"), ("eRecoPim", "f4"), ("eRecoPi0", "f4"),
-                            ("eRecoOther", "f4"), ("ePileup", "f4"),
+                            ("ND_eRecoP", "f4"), ("ND_eRecoN", "f4"),
+                            ("ND_eRecoPip", "f4"), ("ND_eRecoPim", "f4"), ("ND_eRecoPi0", "f4"),
+                            ("ND_eRecoOther", "f4"), ("pileup_energy", "f4"),
                             ("det_x", "i4"),
                             ("vtx_x", "f4"), ("vtx_y", "f4"), ("vtx_z", "f4"),
                             ("Ev_reco", "f4"), ("Elep_reco", "f4"),
@@ -396,19 +406,32 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
         fd_depos_trim_list.append(dep_trim)
         
         # Dump the FD Ehad energies
+        caf_had_true = 0.0
+        if param_reco_file is not None:
+            prec_event = next(paramrecoTree_itr)
+            caf_had_true = getattr(prec_event, "hadTrue", 0.0)
+        else:
+            prec_event = None
+
         fd_ehad = np.empty(1, dtype=fd_ehad_dtype)
         fd_ehad["eventID"] = i_event
-        fd_ehad["fd_ehad_truedep"] = event.FD_Ehad_truedep * 0.001
-        fd_ehad["fd_ehad_out"] = event.FD_Ehad_out * 0.001
-        fd_ehad["fd_ehad_cont"] = event.FD_Ehad_cont * 0.001
+        fd_ehad["fd_true_had_edep"] = getattr(event, "FD_TrueHadEdep", event.FD_TrueHadEdep) * 0.001
+        fd_ehad["fd_true_had_out_edep"] = getattr(event, "FD_TrueHadOutEdep", event.FD_TrueHadOutEdep) * 0.001
+        fd_ehad["fd_true_had_cont_edep"] = getattr(event, "FD_TrueHadContEdep", event.FD_TrueHadContEdep) * 0.001
+        fd_ehad["fd_true_had_act_edep"] = getattr(event, "FD_TrueHadActEdep", event.FD_TrueHadActEdep) * 0.001
+        fd_ehad["fd_true_had_edep_collar"] = getattr(event, "FD_TrueHadEdepCollar", event.FD_TrueHadEdepCollar) * 0.001
+        fd_ehad["hadTrue"] = caf_had_true
         fd_ehad_list.append(fd_ehad)
         
         # Dump the trimmed FD Ehad energies
         fd_ehad_trim = np.empty(1, dtype=fd_ehad_dtype)
         fd_ehad_trim["eventID"] = i_event
-        fd_ehad_trim["fd_ehad_truedep"] = event_trim.FD_Ehad_truedep * 0.001
-        fd_ehad_trim["fd_ehad_out"] = event_trim.FD_Ehad_out * 0.001
-        fd_ehad_trim["fd_ehad_cont"] = event_trim.FD_Ehad_cont * 0.001
+        fd_ehad_trim["fd_true_had_edep"] = getattr(event_trim, "FD_TrueHadEdep", event_trim.FD_TrueHadEdep) * 0.001
+        fd_ehad_trim["fd_true_had_out_edep"] = getattr(event_trim, "FD_TrueHadOutEdep", event_trim.FD_TrueHadOutEdep) * 0.001
+        fd_ehad_trim["fd_true_had_cont_edep"] = getattr(event_trim, "FD_TrueHadContEdep", event_trim.FD_TrueHadContEdep) * 0.001
+        fd_ehad_trim["fd_true_had_act_edep"] = getattr(event_trim, "FD_TrueHadActEdep", event_trim.FD_TrueHadActEdep) * 0.001
+        fd_ehad_trim["fd_true_had_edep_collar"] = getattr(event_trim, "FD_TrueHadEdepCollar", event_trim.FD_TrueHadEdepCollar) * 0.001
+        fd_ehad_trim["hadTrue"] = caf_had_true
         fd_ehad_list_trim.append(fd_ehad_trim)
 
         # Dump genie primaries
@@ -443,7 +466,8 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
 
         # Dump ND param reco results if provided
         if param_reco_file is not None:
-            prec_event = next(paramrecoTree_itr)
+            if prec_event is None:
+                prec_event = next(paramrecoTree_itr)
             prec = np.empty(1, dtype=paramreco_dtype)
             nd_ehad_prec = np.empty(1, dtype=nd_ehad_dtype)
             prec["eventID"] = i_event
@@ -479,21 +503,21 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
             prec["niother"] = prec_event.niother
             prec["nNucleus"] = prec_event.nNucleus
             prec["nUNKNOWN"] = prec_event.nUNKNOWN
-            prec["eP"] = prec_event.eP
-            prec["eN"] = prec_event.eN
-            prec["ePip"] = prec_event.ePip
-            prec["ePim"] = prec_event.ePim
-            prec["ePi0"] = prec_event.ePi0
-            prec["eOther"] = prec_event.eOther
+            prec["eP_ke"] = prec_event.eP_ke
+            prec["eN_ke"] = prec_event.eN_ke
+            prec["ePip_ke"] = prec_event.ePip_ke
+            prec["ePim_ke"] = prec_event.ePim_ke
+            prec["ePi0_ke"] = prec_event.ePi0_ke
+            prec["eOther_ke"] = prec_event.eOther_ke
             prec["ND_Ehad_reco"] = prec_event.Ehad_reco
             prec["ND_Ehad_reco_nopile"] = prec_event.Ehad_reco_nopile
-            prec["eRecoP"] = prec_event.eRecoP
-            prec["eRecoN"] = prec_event.eRecoN
-            prec["eRecoPip"] = prec_event.eRecoPip
-            prec["eRecoPim"] = prec_event.eRecoPim
-            prec["eRecoPi0"] = prec_event.eRecoPi0
-            prec["eRecoOther"] = prec_event.eRecoOther
-            prec["ePileup"] = prec_event.pileup_energy
+            prec["ND_eRecoP"] = prec_event.ND_eRecoP
+            prec["ND_eRecoN"] = prec_event.ND_eRecoN
+            prec["ND_eRecoPip"] = prec_event.ND_eRecoPip
+            prec["ND_eRecoPim"] = prec_event.ND_eRecoPim
+            prec["ND_eRecoPi0"] = prec_event.ND_eRecoPi0
+            prec["ND_eRecoOther"] = prec_event.ND_eRecoOther
+            prec["pileup_energy"] = prec_event.pileup_energy
             prec["det_x"] = prec_event.det_x
             prec["vtx_x"] = prec_event.vtx_x
             prec["vtx_y"] = prec_event.vtx_y
@@ -516,10 +540,11 @@ def dump(input_file, input_file_trim, output_file, param_reco_file=None, min_nEd
             prec["Ehad_veto"] = prec_event.Ehad_veto
             
             nd_ehad_prec["eventID"] = i_event
-            nd_ehad_prec["nd_ehad_truedep"] = prec_event.ND_Ehad_truedep
-            nd_ehad_prec["nd_ehad_out"] = prec_event.ND_Ehad_out
-            nd_ehad_prec["nd_ehad_cont"] = prec_event.ND_Ehad_cont
-            nd_ehad_prec["nd_ehad_act"] = prec_event.ND_Ehad_act
+            nd_ehad_prec["nd_true_had_edep"] = getattr(prec_event, "ND_TrueHadEdep", prec_event.ND_TrueHadEdep)
+            nd_ehad_prec["nd_true_had_out_edep"] = getattr(prec_event, "ND_TrueHadOutEdep", prec_event.ND_TrueHadOutEdep)
+            nd_ehad_prec["nd_true_had_cont_edep"] = getattr(prec_event, "ND_TrueHadContEdep", prec_event.ND_TrueHadContEdep)
+            nd_ehad_prec["nd_true_had_act_edep"] = getattr(prec_event, "ND_TrueHadActEdep", prec_event.ND_TrueHadActEdep)
+            nd_ehad_prec["hadTrue"] = getattr(prec_event, "hadTrue", 0.0)
             
             param_reco_list.append(prec)
             nd_ehad_list.append(nd_ehad_prec)

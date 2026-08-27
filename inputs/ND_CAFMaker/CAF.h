@@ -29,8 +29,8 @@ public:
   // True particle counts
   int nFSP;
   int nP, nN, nipip, nipim, nipi0, nikp, nikm, nik0, niem, niother, nNucleus, nUNKNOWN;
-  double eP, eN, ePip, ePim, ePi0, eOther, ND_Ehad_truedep, ND_Ehad_out, ND_Ehad_cont, ND_Ehad_act;
-  double eRecoP, eRecoN, eRecoPip, eRecoPim, eRecoPi0, eRecoOther;
+  double eP_ke, eN_ke, ePip_ke, ePim_ke, ePi0_ke, eOther_ke, hadTrue, ND_TrueHadEdep, ND_TrueHadOutEdep, ND_TrueHadContEdep, ND_TrueHadActEdep;
+  double ND_eRecoP, ND_eRecoN, ND_eRecoPip, ND_eRecoPim, ND_eRecoPi0, ND_eRecoOther;
   int fsPdg[100];
   double fsPx[100], fsPy[100], fsPz[100], fsE[100];
   double fsTrkLen[100], fsTrkFrontdEdX[100], fsTrkEnddEdX[100];
