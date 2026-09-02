@@ -18,7 +18,7 @@ import ROOT
 from optparse import OptionParser
 import xml.etree.ElementTree as ET
 from array import array
-from math import cos, sin
+from math import cos, sin, sqrt
 
 # Just grepped the gdml for 'auxval="BarrelECal_vol"' and 'auxvalue="EndcapECal_vol"' to get these
 SENSDET_BARRELECALS = set(
@@ -140,13 +140,18 @@ def loop( evt, tgeo, tout ):
                 t_fsPz[nfsp] = particle.Momentum[2]
                 t_fsE[nfsp] = e
                 if((abs(particle.PDGCode) < 11 or abs(particle.PDGCode) > 16) and
-                   abs(particle.PDGCode) != 2212 and abs(particle.PDGCode != 2112)):  
-                    # If it's a hadron but not a proton or neutron
+                   abs(particle.PDGCode) != 2212 and abs(particle.PDGCode) != 2112 and
+                   particle.PDGCode < 1000000000):  
+                    # If it's a hadron but not a proton or neutron or remnant nucleus
                     t_hadTrue[0] += e
                 elif(abs(particle.PDGCode) == 2212):
                     t_hadTrue[0] += (e - 938.27)
                 elif(abs(particle.PDGCode) == 2112):
                     t_hadTrue[0] += (e - 939.57)
+                elif(particle.PDGCode > 1000000000):
+                    # It's a remnant nuclear blob, so we want to subtract off its rest mass
+                    # This assumes the remnant nucleus is not in an excited state
+                    t_hadTrue[0] = e * (1 - sqrt(1 - (p**2 / e**2)))
                 fsParticleIdx[particle.TrackId] = nfsp
                 nfsp += 1
                 pdg = particle.PDGCode
